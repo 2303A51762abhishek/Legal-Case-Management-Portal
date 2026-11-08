@@ -1,16 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../config/env');
+const { getDBStatus } = require('../config/db');
 const { sendSuccess } = require('../utils/response');
 
 /**
  * @route   GET /api/health
- * @desc    System Health Check Endpoint
+ * @desc    System Health Check Endpoint reporting actual database connection
  * @access  Public
  */
 router.get('/', (req, res) => {
+  const dbStatus = getDBStatus();
+
   const healthData = {
-    status: 'HEALTHY',
+    status: dbStatus.isConnected ? 'HEALTHY' : 'DEGRADED',
     service: 'Legal Case and Court Hearing Management Portal API',
     version: '1.0.0',
     environment: config.env,
@@ -23,12 +26,23 @@ router.get('/', (req, res) => {
       course: 'DevOps & Full Stack (B.Tech IV-I)',
     },
     database: {
-      status: 'Awaiting Phase 4 Schema Connection',
-      target: config.mongodbUri.replace(/\/\/.*@/, '//***:***@'), // Mask credentials if present
+      status: dbStatus.state,
+      connected: dbStatus.isConnected,
+      host: dbStatus.host,
+      databaseName: dbStatus.databaseName,
     },
+    modelsLoaded: [
+      'User',
+      'Client',
+      'Case',
+      'Hearing',
+      'Task',
+      'Document',
+      'Notification',
+    ],
   };
 
-  return sendSuccess(res, healthData, 'JurisFlow Backend Service is Operational', 200);
+  return sendSuccess(res, healthData, 'JurisFlow Backend Service Health Status', 200);
 });
 
 module.exports = router;
