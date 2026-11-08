@@ -1,5 +1,9 @@
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
 const config = require('./env');
+
+const DEV_URI_FILE = path.join(__dirname, '../../.mongo_dev_uri');
 
 let memoryServer = null;
 let isListenersAttached = false;
@@ -70,6 +74,23 @@ const connectDB = async () => {
     if (config.env === 'development') {
       try {
         if (!memoryServer) {
+          // Check if an existing dev memory server is already running and recorded
+          if (fs.existsSync(DEV_URI_FILE)) {
+            try {
+              const recordedUri = fs.readFileSync(DEV_URI_FILE, 'utf8').trim();
+              if (recordedUri) {
+                await mongoose.connect(recordedUri, {
+                  dbName: 'legal_case_management_db',
+                  serverSelectionTimeoutMS: 2500,
+                });
+                console.log(`💡 Connected to active shared In-Memory MongoDB: ${recordedUri}`);
+                return getDBStatus();
+              }
+            } catch (_) {
+              // Stale file or inaccessible; continue to create fresh
+            }
+          }
+
           console.log('🔄 Initializing in-memory MongoDB development server...');
           const { MongoMemoryServer } = require('mongodb-memory-server');
           memoryServer = await MongoMemoryServer.create({
@@ -77,6 +98,10 @@ const connectDB = async () => {
               dbName: 'legal_case_management_db',
             },
           });
+          const memoryUri = memoryServer.getUri();
+          try {
+            fs.writeFileSync(DEV_URI_FILE, memoryUri);
+          } catch (_) {}
         }
         const memoryUri = memoryServer.getUri();
         console.log(`💡 In-Memory MongoDB running for local development: ${memoryUri}`);
@@ -106,6 +131,9 @@ const disconnectDB = async () => {
   if (memoryServer) {
     await memoryServer.stop();
     memoryServer = null;
+    try {
+      if (fs.existsSync(DEV_URI_FILE)) fs.unlinkSync(DEV_URI_FILE);
+    } catch (_) {}
   }
   console.log('🍃 MongoDB connection closed.');
 };

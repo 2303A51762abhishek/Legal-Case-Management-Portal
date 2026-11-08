@@ -3,6 +3,7 @@ const config = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const { User } = require('./models');
 const seedDatabase = require('./utils/seed');
+const seedDemoData = require('./utils/seed_demo');
 const { startScheduledReminderCron, stopScheduledReminderCron } = require('./services/reminder.service');
 
 const PORT = config.port || 5000;
@@ -15,11 +16,11 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    // Auto-seed demo accounts if database is fresh
+    // Auto-seed comprehensive demo accounts if database is fresh or incomplete
     const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      console.log('🌱 Fresh database detected. Auto-seeding initial demo records...');
-      await seedDatabase(false);
+    if (userCount < 10) {
+      console.log('🌱 Database requires comprehensive demo seeding. Seeding records...');
+      await seedDemoData(false);
     }
 
     server = app.listen(PORT, HOST, () => {

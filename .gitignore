@@ -20,6 +20,8 @@ frontend/node_modules/
 .env.production.local
 backend/.env
 frontend/.env
+.mongo_dev_uri
+backend/.mongo_dev_uri
 
 # Build outputs
 dist/

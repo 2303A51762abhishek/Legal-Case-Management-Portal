@@ -348,29 +348,109 @@ Verifies:
 - Live mutation reaction: registering a case immediately increments admin and clerk metrics
 - Client confidentiality guard (zero leakage of internal tasks or privileged documents)
 
+### G. Phase 11: Data Integrity, Demo Seeder & Browser E2E Tests
+```bash
+cd backend
+# 1. Seed Comprehensive Demonstration Records (Idempotent & Safe)
+npm run seed:demo
+
+# 2. Run Phase 11 Data Integrity & Relational Verification Suite
+npm run test:phase11
+
+# 3. Run Browser End-to-End Test Suite & Screenshot Captures
+npm run test:e2e
+```
+Verifies:
+- Safe, repeatable generation of 19 demo users, 10 clients, 32 cases, 42 hearings, 52 tasks, 20 sample files, and 28 notifications.
+- Zero orphaned records (every case, hearing, task, document, and notification references valid entities).
+- Non-overlapping courtrooms and presiding judges in scheduled cause appearances.
+- Litigant privacy isolation and confidential document shielding.
+- 14 automated browser interactions driving headless Google Chrome via Puppeteer.
+- Captures 10 high-resolution visual screenshots into `docs/phase11/screenshots/`.
+- Mobile viewport responsive layout verification (375x812 iPhone format).
+
 ---
 
-## 12. How to Run the Servers
+## 12. Demonstration User Accounts & Credentials
 
-### A. Running the React Frontend (Phase 2)
+> [!WARNING]
+> **DEVELOPMENT ONLY NOTICE:** The following demonstration credentials are provided strictly for local university project testing, viva evaluation, and classroom presentation. Never use these credentials in a production environment. All passwords are securely hashed using bcrypt (10 rounds).
+
+| Role | Name & Title | Email Address | Development Password | Access Permissions |
+| :--- | :--- | :--- | :--- | :--- |
+| **`ADMIN`** | Adv. Rajeshwar Sharma *(Managing Partner)* | `admin@jurismanagement.in` | `Admin@123` | Full access to users, cases, cause lists, reports, firm metrics |
+| **`LAWYER`** | Adv. Mamillapally Abhishek *(Lead Counsel)* | `abhishek@jurismanagement.in` | `Lawyer@123` | Assigned cases, trial progress, hearings, legal briefs, tasks |
+| **`LAWYER`** | Adv. Priya Sharma *(Senior Corporate Counsel)* | `priya.sharma@jurismanagement.in` | `Lawyer@123` | Assigned corporate dockets, environmental compliance cases |
+| **`LAWYER`** | Adv. Vikas Verma *(Constitutional Counsel)* | `vikas.verma@jurismanagement.in` | `Lawyer@123` | High Court writ petitions, renewable energy appeals |
+| **`LAWYER`** | Adv. Ananya Deshmukh *(Arbitration Specialist)* | `ananya.deshmukh@jurismanagement.in` | `Lawyer@123` | Commercial arbitrations, EPC highway concession disputes |
+| **`LAWYER`** | Adv. Arjun Menon *(Banking Law Specialist)* | `arjun.menon@jurismanagement.in` | `Lawyer@123` | Debt recovery, SARFAESI proceedings, NCLT insolvency |
+| **`CLIENT`** | Vikramaditya Rao *(MD, Zenith Technologies)* | `vikram.rao@enterprise.com` | `Client@123` | Litigant portal: Own cases only, public documents, trial updates |
+| **`CLIENT`** | Dr. Meera Nair *(Director, Apollo Diagnostics)* | `meera.nair@apollohealthcare.in` | `Client@123` | Litigant portal: Healthcare regulatory dockets, hearings |
+| **`CLIENT`** | Rajesh Patel *(VP, Gujarat Maritime)* | `rajesh.patel@gujaratmaritime.in` | `Client@123` | Litigant portal: Admiralty proceedings, port clearance suits |
+| **`CLIENT`** | Sunita Reddy *(CEO, Deccan Software)* | `sunita.reddy@deccansoft.in` | `Client@123` | Litigant portal: Commercial lease disputes, escrow litigation |
+| **`CLERK`** | Suresh Chandra *(Registry & Cause Clerk)* | `suresh.clerk@jurismanagement.in` | `Clerk@123` | Case registration, scheduling hearings, filing dockets |
+| **`CLERK`** | Ramesh Patel *(Filing & Scrutiny Clerk)* | `ramesh.clerk@jurismanagement.in` | `Clerk@123` | Summons service verification, court stamps, scrutiny |
+| **`CLERK`** | Geeta Sharma *(Records Superintendent)* | `geeta.clerk@jurismanagement.in` | `Clerk@123` | Certified copies, judicial archives, registry listings |
+
+---
+
+## 13. Browser Visual Screenshots (Phase 11)
+
+All high-fidelity screenshots are captured automatically by `npm run test:e2e` using Google Chrome in headless mode and stored in `docs/phase11/screenshots/`:
+
+| Screenshot File | Resolution | Description & Visual Modules Tested |
+| :--- | :--- | :--- |
+| **`01_login_page.png`** | 1440 × 900 | Clean authentication page with role autofill buttons and university metadata |
+| **`02_admin_dashboard.png`** | 1440 × 900 | Administrative firm overview, 4 live metric stat cards, and recent dockets |
+| **`03_lawyer_dashboard.png`** | 1440 × 900 | Advocate practice desk, assigned dockets, trial progress, and upcoming hearings |
+| **`04_client_dashboard.png`** | 1440 × 900 | Litigant portal, client-scoped matters, trial progress, and public documents |
+| **`05_clerk_dashboard.png`** | 1440 × 900 | Registry cause list, daily intake dockets, and pending clerical filing tasks |
+| **`06_cases_management.png`** | 1440 × 900 | Complete legal dockets directory, status filters, search, and pagination |
+| **`07_hearings_calendar.png`** | 1440 × 900 | Court hearing cause list, calendar schedule, courtroom allocations, and judges |
+| **`08_tasks_board.png`** | 1440 × 900 | Task priority badges (`URGENT`, `HIGH`, `MEDIUM`, `LOW`), overdue flags, and assignees |
+| **`09_document_vault.png`** | 1440 × 900 | Secure case brief archive, file type badges, size indicators, and streaming download |
+| **`10_reports_analytics.png`** | 1440 × 900 | Four mandatory reports engine with CSV download and printable PDF actions |
+
+---
+
+## 14. How to Run the Servers & Execute All Tests
+
+### Step 1: Start the Backend REST API Server
+```bash
+cd backend
+npm start
+# Server listens on http://127.0.0.1:5000
+```
+
+### Step 2: Start the React Frontend Development Server
 ```bash
 cd frontend
 npm run dev -- --host --port 3000
+# Accessible at http://localhost:3000/
 ```
-Open **`http://localhost:3000/`** in your browser.
 
-### B. Running the Express Backend (Phase 3 & 4)
+### Step 3: Seed Demonstration Data
 ```bash
 cd backend
-node src/server.js
-# Or with auto-reload:
-npm run dev
+npm run seed:demo
 ```
-Backend runs on **`http://127.0.0.1:5000`**.
+
+### Step 4: Run the Complete Automated Test Suite (Phases 5 to 11)
+```bash
+cd backend
+npm run test:auth      # Phase 5: Authentication & RBAC
+npm run test:cases     # Phase 6: Cases & Clients
+npm run test:hearings  # Phase 7: Hearing Schedule & Conflict Prevention
+npm run test:phase8    # Phase 8: Tasks, Documents Vault & Notifications
+npm run test:reports   # Phase 9: Four Mandatory Reports & CSV/PDF Export
+npm run test:phase10   # Phase 10: All Role Dashboards & Live Integration
+npm run test:phase11   # Phase 11: Relational Data Integrity & Benchmarks
+npm run test:e2e       # Phase 11: Puppeteer Browser Workflows & Screenshots
+```
 
 ---
 
-## 13. Health Check Verification
+## 15. Health Check Verification
 
 ```bash
 curl -s http://127.0.0.1:5000/api/health

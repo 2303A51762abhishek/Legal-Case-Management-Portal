@@ -7,13 +7,16 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/utils/seed.js",
+    "seed:demo": "node src/utils/seed_demo.js",
     "test:db": "node src/utils/verify_phase4.js",
     "test:auth": "node src/utils/verify_phase5.js",
     "test:cases": "node src/utils/verify_phase6.js",
     "test:hearings": "node src/utils/verify_phase7.js",
     "test:phase8": "node src/utils/verify_phase8.js",
     "test:reports": "node src/utils/verify_phase9.js",
-    "test:phase10": "node src/utils/verify_phase10.js"
+    "test:phase10": "node src/utils/verify_phase10.js",
+    "test:phase11": "node src/utils/verify_phase11.js",
+    "test:e2e": "node src/utils/verify_e2e.js"
   },
   "keywords": [
     "legal",
@@ -42,6 +45,7 @@
   },
   "devDependencies": {
     "mongodb-memory-server": "^11.3.0",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "puppeteer-core": "^25.16.0"
   }
 }
