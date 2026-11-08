@@ -231,7 +231,56 @@ Verifies:
 
 ---
 
-## 9. How to Run the Servers
+## 9. Tasks, Deadlines, Document Vault & Notification Architecture (Phase 8)
+
+1. **Task & Deadline Management System (`task.controller.js`)**:
+   - `POST /api/tasks`: Create legal action task with priority (`LOW`, `MEDIUM`, `HIGH`, `URGENT`), deadline, case linkage, and assignee notification.
+   - `GET /api/tasks`: Role-scoped task board with search, dynamic overdue calculation, and aggregate statistics (`total`, `pending`, `inProgress`, `completed`, `overdue`, `urgent`).
+   - `GET /api/tasks/:id`: Task profile with populated case, assignee, and creator.
+   - `PUT /api/tasks/:id`: Edit task details (Admin, Lawyer, Clerk).
+   - `PATCH /api/tasks/:id/status`: Fast lifecycle transition (`PENDING` -> `IN_PROGRESS` -> `COMPLETED`), auto-recording `completedAt`.
+   - `DELETE /api/tasks/:id`: Soft-deletion (`isDeleted: true`).
+   - **Litigant Privilege Guard**: Litigant clients can only see tasks designated with `isClientVisible: true` for their cases; confidential internal advocate drafting, research, and filing instructions remain hidden.
+2. **Multer Secure Document Vault (`upload.middleware.js` & `document.controller.js`)**:
+   - `POST /api/documents/upload`: Multipart document upload supporting PDF, DOC, DOCX, JPG, and PNG up to 10 MB.
+   - **Deep Magic-Byte Header Inspection**: Inspects the physical byte signature of uploaded files (`%PDF`, `PK\x03\x04`, `0xFF\xD8\xFF`, etc.) to prevent disguised malicious binaries or scripts.
+   - **Secure Storage Names**: Generates non-guessable, sanitized storage filenames (`doc_<timestamp>_<hex>.<ext>`). Private host filesystem paths are never exposed in API responses.
+   - `GET /api/documents`: Document directory with case and type filters. Litigant clients are strictly barred from viewing confidential documents (`isConfidential: true`).
+   - `GET /api/documents/:id/download`: Secure file streaming download with path traversal prevention (`path.resolve` containment guard) and role authorization checks.
+   - `DELETE /api/documents/:id`: Soft-deletion for authorized counsel and administrators.
+3. **Notification Center & Automated Reminder Engine (`reminder.service.js`)**:
+   - `GET /api/notifications`: User-scoped notification list with real-time unread counts and type filtering.
+   - `PATCH /api/notifications/:id/read`: Mark individual notification as read.
+   - `PATCH /api/notifications/read-all`: Mark all notifications as read.
+   - **Automated Scheduled Reminder Mechanism**:
+     - Scans for upcoming court hearings within 48 hours and approaching task deadlines within 24 hours.
+     - Automatically flags past-deadline tasks as `OVERDUE`.
+     - Uses **cryptographic deduplication fingerprints** (`fingerprint: REMINDER_HEARING_<id>_<date>`) to guarantee litigants and advocates are never spammed with duplicate reminders.
+     - Runs on server startup and every 5 minutes via a non-blocking background scheduler.
+4. **Frontend Interfaces (`TasksPage.jsx`, `DocumentsPage.jsx`, `NotificationsPage.jsx`, `Navbar.jsx`)**:
+   - Interactive Task Board with 6 metrics cards, status tabs, priority filters, and quick status toggling.
+   - Drag-and-drop Document Vault with file preview, size formatting, type badges, and authenticated streaming downloads.
+   - Live Notification Center with unread counter badge in Navbar and direct one-click read actions.
+
+### Run the Automated Phase 8 Test Suite
+```bash
+cd backend
+npm run test:phase8
+```
+Verifies:
+- Task creation and real-time assignee notification
+- Status transitions and `completedAt` timestamp tracking
+- Automatic overdue task identification and stats calculation
+- Client privilege scoping (internal tasks hidden, client tasks visible, 403 on client creation)
+- Valid PDF Multer upload and physical path suppression
+- Disguised file magic-byte rejection (HTTP 400 Bad Request)
+- Secure document streaming download & path traversal prevention
+- Confidential document privilege guard (HTTP 403 Forbidden on client download)
+- Notification retrieval, single read patch, bulk read patch, and reminder deduplication
+
+---
+
+## 10. How to Run the Servers
 
 ### A. Running the React Frontend (Phase 2)
 ```bash
@@ -251,7 +300,7 @@ Backend runs on **`http://127.0.0.1:5000`**.
 
 ---
 
-## 10. Health Check Verification
+## 11. Health Check Verification
 
 ```bash
 curl -s http://127.0.0.1:5000/api/health

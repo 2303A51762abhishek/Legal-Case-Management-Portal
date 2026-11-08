@@ -50,6 +50,20 @@ const taskSchema = new mongoose.Schema(
       default: 'PENDING',
       index: true,
     },
+    isClientVisible: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -58,6 +72,7 @@ const taskSchema = new mongoose.Schema(
 
 taskSchema.index({ assignedUser: 1, status: 1 });
 taskSchema.index({ deadline: 1, status: 1 });
+taskSchema.index({ case: 1, isClientVisible: 1, isDeleted: 1 });
 
 const Task = mongoose.model('Task', taskSchema);
 

@@ -2,11 +2,11 @@ const rateLimit = require('express-rate-limit');
 
 /**
  * Rate Limiting Middleware for Authentication Endpoints
- * Prevents brute force password attacks
+ * Prevents brute force password attacks (30 in production, 300 during local dev/testing)
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // Limit each IP to 30 authentication attempts per windowMs
+  max: process.env.NODE_ENV === 'production' ? 30 : 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

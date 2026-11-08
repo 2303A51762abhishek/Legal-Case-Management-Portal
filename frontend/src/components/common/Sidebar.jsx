@@ -44,6 +44,8 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         { name: 'All Legal Cases', path: '/cases', icon: Briefcase },
         { name: 'Court Hearings', path: '/hearings', icon: Calendar },
         { name: 'Task Board', path: '/tasks', icon: CheckSquare },
+        { name: 'Document Vault', path: '/documents', icon: FolderOpen },
+        { name: 'Notifications', path: '/notifications', icon: Bell },
         { name: 'Reports & Analytics', path: '/reports', icon: FileText, badge: '4 Reports' },
       ];
     }
@@ -54,8 +56,9 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         { name: 'My Assigned Cases', path: '/cases', icon: Briefcase },
         { name: 'Assigned Clients', path: '/clients', icon: Users },
         { name: 'Hearing Schedule', path: '/hearings', icon: Calendar },
-        { name: 'Case Documents', path: '/cases', icon: FolderOpen },
+        { name: 'Document Vault', path: '/documents', icon: FolderOpen },
         { name: 'Deadlines & Tasks', path: '/tasks', icon: CheckSquare },
+        { name: 'Notifications', path: '/notifications', icon: Bell },
         { name: 'Case Analytics', path: '/reports', icon: FileText },
       ];
     }
@@ -65,8 +68,9 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         ...commonTop,
         { name: 'My Legal Cases', path: '/cases', icon: Briefcase },
         { name: 'Upcoming Hearings', path: '/hearings', icon: Calendar },
-        { name: 'Case Documents', path: '/cases', icon: FolderOpen },
-        { name: 'Court Notices', path: '/tasks', icon: Bell },
+        { name: 'Case Documents', path: '/documents', icon: FolderOpen },
+        { name: 'Action Items', path: '/tasks', icon: CheckSquare },
+        { name: 'Court Notices', path: '/notifications', icon: Bell },
       ];
     }
 
@@ -77,6 +81,8 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         { name: 'Client Management', path: '/clients', icon: Users },
         { name: 'Court Daily Cause List', path: '/hearings', icon: Calendar },
         { name: 'Registry Tasks', path: '/tasks', icon: CheckSquare },
+        { name: 'Document Vault', path: '/documents', icon: FolderOpen },
+        { name: 'Notifications', path: '/notifications', icon: Bell },
         { name: 'Hearing Reports', path: '/reports', icon: FileText },
       ];
     }

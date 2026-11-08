@@ -20,7 +20,13 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['HEARING_ALERT', 'DEADLINE_ALERT', 'CASE_UPDATE', 'GENERAL'],
+      enum: [
+        'HEARING_ALERT',
+        'DEADLINE_ALERT',
+        'CASE_UPDATE',
+        'TASK_ASSIGNMENT',
+        'GENERAL',
+      ],
       default: 'GENERAL',
       index: true,
     },
@@ -29,10 +35,29 @@ const notificationSchema = new mongoose.Schema(
       ref: 'Case',
       default: null,
     },
+    relatedTask: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Task',
+      default: null,
+    },
+    relatedHearing: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Hearing',
+      default: null,
+    },
+    fingerprint: {
+      type: String,
+      default: null,
+      index: true,
+    },
     isRead: {
       type: Boolean,
       default: false,
       index: true,
+    },
+    readAt: {
+      type: Date,
+      default: null,
     },
   },
   {

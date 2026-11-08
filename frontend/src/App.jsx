@@ -8,6 +8,8 @@ import { CasesPage } from './pages/CasesPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { HearingsPage } from './pages/HearingsPage';
 import { TasksPage } from './pages/TasksPage';
+import { DocumentsPage } from './pages/DocumentsPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { UsersPage } from './pages/UsersPage';
 import { LoginPage } from './pages/LoginPage';
@@ -37,6 +39,8 @@ function App() {
             <Route path="clients" element={<ClientsPage />} />
             <Route path="hearings" element={<HearingsPage />} />
             <Route path="tasks" element={<TasksPage />} />
+            <Route path="documents" element={<DocumentsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="reports" element={<ReportsPage />} />
 
             {/* User Management strictly restricted to ADMIN role */}

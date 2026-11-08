@@ -40,6 +40,10 @@ const documentSchema = new mongoose.Schema(
       type: String,
       required: [true, 'File name is required'],
     },
+    storedFileName: {
+      type: String,
+      default: '',
+    },
     fileSize: {
       type: Number,
       required: [true, 'File size in bytes is required'],
@@ -55,6 +59,12 @@ const documentSchema = new mongoose.Schema(
     isConfidential: {
       type: Boolean,
       default: false,
+      index: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
   },
   {
@@ -63,6 +73,7 @@ const documentSchema = new mongoose.Schema(
 );
 
 documentSchema.index({ case: 1, documentType: 1 });
+documentSchema.index({ case: 1, isConfidential: 1, isDeleted: 1 });
 
 const Document = mongoose.model('Document', documentSchema);
 

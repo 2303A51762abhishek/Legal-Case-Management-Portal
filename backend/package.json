@@ -10,7 +10,8 @@
     "test:db": "node src/utils/verify_phase4.js",
     "test:auth": "node src/utils/verify_phase5.js",
     "test:cases": "node src/utils/verify_phase6.js",
-    "test:hearings": "node src/utils/verify_phase7.js"
+    "test:hearings": "node src/utils/verify_phase7.js",
+    "test:phase8": "node src/utils/verify_phase8.js"
   },
   "keywords": [
     "legal",

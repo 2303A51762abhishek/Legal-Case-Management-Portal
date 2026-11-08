@@ -3,6 +3,7 @@ const config = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const { User } = require('./models');
 const seedDatabase = require('./utils/seed');
+const { startScheduledReminderCron, stopScheduledReminderCron } = require('./services/reminder.service');
 
 const PORT = config.port || 5000;
 const HOST = config.host || '127.0.0.1';
@@ -29,6 +30,9 @@ const startServer = async () => {
       console.log(`🎓 Project: ${config.project.name}`);
       console.log(`👨‍🎓 Student: ${config.project.student} (${config.project.roll})`);
       console.log('====================================================');
+
+      // Start background automated reminder and deadline scanner
+      startScheduledReminderCron(5 * 60 * 1000); // Scans every 5 minutes
     });
   } catch (err) {
     console.error('❌ Failed to start backend server:', err.message);
@@ -41,6 +45,7 @@ startServer();
 // Graceful process shutdown handling
 const gracefulShutdown = async (signal) => {
   console.log(`\nReceived ${signal}. Gracefully closing HTTP server and database...`);
+  stopScheduledReminderCron();
   if (server) {
     server.close(async () => {
       await disconnectDB();

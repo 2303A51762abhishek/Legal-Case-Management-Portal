@@ -44,10 +44,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 5. Static Files Serving (Uploaded Documents)
-app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
-
-// 6. Base API Router
+// 5. Base API Router (Documents are strictly streamed via authenticated /api/documents/:id/download)
 app.use('/api', routes);
 
 // 7. Root Route Redirection / Info
