@@ -280,7 +280,45 @@ Verifies:
 
 ---
 
-## 10. How to Run the Servers
+## 10. The Four Mandatory Reports & Export Engine Architecture (Phase 9)
+
+JurisFlow implements four distinct institutional reports powered by real-time MongoDB aggregations, query filters, and data export pipelines:
+
+1. **Report 1: Case Status Report (`GET /api/reports/case-status`)**:
+   - Comprehensive litigation portfolio breakdown including all 13 core metrics: Case Reference, Title, Client, Assigned Counsel, Court Name, Courtroom, Case Type, Filing Date, Current Status, Stage, Priority, Progress %, Last Hearing Date, and Next Scheduled Hearing Date.
+   - Summary aggregates: Total Cases, Active Cases, Under Review / Pending Cases, Closed / Decided Cases, High-Priority Cases, and Status Breakdown distribution.
+   - Query filters: Status, Priority, Case Type, Court, Assigned Lawyer, Date Range, and keyword search.
+2. **Report 2: Hearing Calendar Report (`GET /api/reports/hearing-calendar`)**:
+   - Cause list schedule including Hearing Date, Hearing Time, Duration, Case Reference, Case Title, Litigant, Counsel, Court Complex, Courtroom, Presiding Judge, Purpose, Status, and Next Hearing Date.
+   - Summary aggregates: Scheduled Cause, Completed Hearings, Adjourned Hearings, Cancelled Hearings, and Active Court Complexes.
+   - Query filters: Hearing Date Range, Court Complex, Presiding Judge, Counsel, and Status.
+3. **Report 3: Pending Tasks Report (`GET /api/reports/pending-tasks`)**:
+   - Litigation action items including Title, Linked Case Reference, Assignee Name & Role, Created By, Priority, Deadline Date, Status, Overdue Flag, and Dynamic **Days Remaining** signed integer.
+   - Summary aggregates: Total Outstanding Tasks, Pending, In-Progress, Overdue, and Urgent.
+   - Filters: Assignee, Case, Priority, Deadline Range, Status, and Overdue-only quick toggle.
+4. **Report 4: Client Case Summary Report (`GET /api/reports/client-summary`)**:
+   - Client caseload profiles including Client Name, Organization, Contact Email, Phone, City, Assigned Counsel, Total Cases, Active Cases, Closed Cases, and nested Array of linked litigation dockets.
+   - Summary aggregates: Total Registered Clients, Active Retainers, Total Client Dockets, and Corporate Accounts.
+5. **Data Export Engine (CSV & Printable PDF)**:
+   - **CSV Export**: Client-side RFC 4180 compliant CSV export engine formatting headers, cell values, and escaping for Microsoft Excel and Google Sheets.
+   - **Printable PDF Export**: Print-optimized stylesheet (`@media print`) rendering institutional headers (Student Name, Roll Number, Subject, University Year), hiding UI chrome, and outputting clean, publication-grade tables formatted for A4 landscape/portrait.
+
+### Run the Automated Phase 9 Reports Test Suite
+```bash
+cd backend
+npm run test:reports
+```
+Verifies:
+- All 13 mandatory columns in Case Status Report
+- Summary statistics computation across all 4 reports
+- Date range, status, priority, and court query filtering
+- Dynamic days remaining and overdue identification in task reports
+- Client metadata and embedded caseload dockets array
+- Litigant client privacy scoping across all 4 reports (internal records suppressed)
+
+---
+
+## 11. How to Run the Servers
 
 ### A. Running the React Frontend (Phase 2)
 ```bash
@@ -300,7 +338,7 @@ Backend runs on **`http://127.0.0.1:5000`**.
 
 ---
 
-## 11. Health Check Verification
+## 12. Health Check Verification
 
 ```bash
 curl -s http://127.0.0.1:5000/api/health
