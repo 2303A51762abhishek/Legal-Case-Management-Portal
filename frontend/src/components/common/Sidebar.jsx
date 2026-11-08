@@ -40,6 +40,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       return [
         ...commonTop,
         { name: 'User Management', path: '/users', icon: Users, badge: 'Admin' },
+        { name: 'Client Directory', path: '/clients', icon: Users },
         { name: 'All Legal Cases', path: '/cases', icon: Briefcase },
         { name: 'Court Hearings', path: '/hearings', icon: Calendar },
         { name: 'Task Board', path: '/tasks', icon: CheckSquare },
@@ -51,6 +52,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       return [
         ...commonTop,
         { name: 'My Assigned Cases', path: '/cases', icon: Briefcase },
+        { name: 'Assigned Clients', path: '/clients', icon: Users },
         { name: 'Hearing Schedule', path: '/hearings', icon: Calendar },
         { name: 'Case Documents', path: '/cases', icon: FolderOpen },
         { name: 'Deadlines & Tasks', path: '/tasks', icon: CheckSquare },
@@ -72,8 +74,8 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       return [
         ...commonTop,
         { name: 'Case Registration', path: '/cases', icon: Briefcase, badge: 'New' },
+        { name: 'Client Management', path: '/clients', icon: Users },
         { name: 'Court Daily Cause List', path: '/hearings', icon: Calendar },
-        { name: 'Client Intake', path: '/users', icon: Users },
         { name: 'Registry Tasks', path: '/tasks', icon: CheckSquare },
         { name: 'Hearing Reports', path: '/reports', icon: FileText },
       ];

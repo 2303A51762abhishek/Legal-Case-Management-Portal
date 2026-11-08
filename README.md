@@ -161,7 +161,39 @@ Verifies:
 
 ---
 
-## 7. How to Run the Servers
+## 7. Client & Case Management Architecture (Phase 6)
+
+1. **Automatic Case Reference Number Generation**:
+   Generates unique court references formatted as `LCMS-YYYY-XXXX` (e.g. `LCMS-2026-0105`) with a thread-safe increment loop preventing collisions.
+2. **Client Management System**:
+   - `POST /api/clients`: Client registration with address, organization, and advocate assignment.
+   - `GET /api/clients`: Client directory with live case counts, search, and pagination.
+   - `GET /api/clients/:id`: Single client details with role-scoped authorization.
+   - `PUT /api/clients/:id`: Update client metadata.
+   - `GET /api/clients/:id/cases`: Full litigation case history for a client.
+3. **Case Management System**:
+   - `POST /api/cases`: Registers dockets, validates lawyer & client ObjectIds, assigns stage & progress.
+   - `GET /api/cases`: Scoped retrieval (Admin/Clerk: All, Lawyer: Assigned only, Client: Own only).
+   - `GET /api/cases/:id`: Detailed case view with populated client and lawyer.
+   - `PUT /api/cases/:id`: Updates progress, stage, priority, and status. Litigant clients are forbidden from modifying records.
+
+### Run the Automated Phase 6 Client & Case Test Suite
+```bash
+cd backend
+npm run test:cases
+```
+Verifies:
+- Client creation, duplicate email rejection (409), and search
+- Case registration with `LCMS-YYYY-XXXX` reference validation
+- Role-based scoping across ADMIN, LAWYER, CLIENT, and CLERK
+- Litigant client cross-case isolation (403 Forbidden on other clients' dockets)
+- Modification protection (CLIENT cannot edit cases)
+- Lawyer stage progress updates (`PUT /api/cases/:id`)
+- Status filtering and pagination
+
+---
+
+## 8. How to Run the Servers
 
 ### A. Running the React Frontend (Phase 2)
 ```bash

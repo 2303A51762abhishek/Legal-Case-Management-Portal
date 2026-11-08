@@ -1,19 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { sendSuccess } = require('../utils/response');
+const {
+  createCase,
+  getCases,
+  getCaseById,
+  updateCase,
+} = require('../controllers/case.controller');
 const authenticate = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
 
+// All case routes require authentication
 router.use(authenticate);
 
-// All roles can access cases (filtered by role at controller level)
-router.get('/', (req, res) => {
-  return sendSuccess(res, [], 'Cases route initialized', 200);
-});
+// Get All Cases (Role-scoped at controller level)
+router.get('/', getCases);
 
-// Admin and Clerk can register new cases
-router.post('/', authorizeRoles('ADMIN', 'CLERK'), (req, res) => {
-  return sendSuccess(res, null, 'Case registration route initialized', 201);
-});
+// Register New Case (Admin, Clerk)
+router.post('/', authorizeRoles('ADMIN', 'CLERK'), createCase);
+
+// Get Case Details by ID (Scoped per role)
+router.get('/:id', getCaseById);
+
+// Update Case Info & Progress (Admin, Lawyer, Clerk)
+router.put('/:id', authorizeRoles('ADMIN', 'LAWYER', 'CLERK'), updateCase);
 
 module.exports = router;
