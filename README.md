@@ -193,7 +193,45 @@ Verifies:
 
 ---
 
-## 8. How to Run the Servers
+## 8. Court Hearing Calendar & Conflict Prevention Architecture (Phase 7)
+
+1. **Intelligent Scheduling & Conflict Prevention Engine (`conflict.service.js`)**:
+   - Compares candidate start and end time windows against active court hearings.
+   - **Courtroom Conflict Detection**: Prohibits concurrent hearings in the same courtroom within the same court complex (`HTTP 409 Conflict`).
+   - **Judge Overlap Conflict Detection**: Prohibits a presiding judge from being double-booked across different courtrooms at identical or overlapping time slots (`HTTP 409 Conflict`).
+   - **Cancelled Hearing Exemption**: Automatically bypasses hearings with `CANCELLED` status so freed slots can be immediately rescheduled.
+2. **Automated Notification Service (`notification.service.js`)**:
+   - Automatically dispatches in-app notifications to assigned advocates and litigants whenever a hearing is scheduled, adjourned, or rescheduled.
+3. **Court Hearing REST APIs**:
+   - `POST /api/hearings`: Schedules hearing with conflict checks, sets case stage/status, and notifies parties.
+   - `GET /api/hearings`: Role-scoped hearing retrieval with search and query filters (`caseReference`, `status`, `courtName`, `hearingDate`, `lawyer`).
+   - `GET /api/hearings/:id`: Fetches detailed hearing entry with populated case, client, and lawyer references.
+   - `PUT /api/hearings/:id`: Reschedules hearing, updates court/judge/notes with overlap validation.
+   - `PATCH /api/hearings/:id/status`: Quickly updates hearing lifecycle status (`SCHEDULED`, `ADJOURNED`, `COMPLETED`, `CANCELLED`).
+   - `DELETE /api/hearings/:id`: Soft-cancellation (marks as `CANCELLED` rather than destroying historical audit records).
+4. **Interactive Frontend Calendar & Cause List (`HearingsPage.jsx`)**:
+   - **Dual Views**: Interactive 7x5 monthly calendar view with color-coded hearing badges and a high-density tabular Cause List view.
+   - **Scheduling Modal**: Cause scheduling drawer with real-time feedback, courtroom, judge, and duration configuration.
+   - **Real-Time Conflict Warning**: Surfaces server-detected courtroom/judge overlap errors with actionable conflict badges.
+   - **Direct Lifecycle Actions**: One-click adjournment, completion marking, and cancellation modals.
+
+### Run the Automated Phase 7 Court Hearing Test Suite
+```bash
+cd backend
+npm run test:hearings
+```
+Verifies:
+- Hearing registration with start/end duration calculation
+- Courtroom overlap conflict rejection (409 Conflict)
+- Presiding judge double-booking rejection (409 Conflict)
+- Cancelled hearing exclusion from conflict checks
+- Role-based scoping (Admin/Lawyer/Client/Clerk)
+- Litigant client scheduling prohibition (403 Forbidden)
+- Advocate status patching (`PATCH /api/hearings/:id/status`)
+
+---
+
+## 9. How to Run the Servers
 
 ### A. Running the React Frontend (Phase 2)
 ```bash
@@ -213,7 +251,7 @@ Backend runs on **`http://127.0.0.1:5000`**.
 
 ---
 
-## 7. Health Check Verification
+## 10. Health Check Verification
 
 ```bash
 curl -s http://127.0.0.1:5000/api/health
@@ -240,7 +278,7 @@ Expected output:
       "status": "CONNECTED",
       "connected": true,
       "host": "127.0.0.1",
-      "databaseName": "test"
+      "databaseName": "legal_case_management_db"
     },
     "modelsLoaded": [
       "User",

@@ -1,19 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { sendSuccess } = require('../utils/response');
+const {
+  createHearing,
+  getHearings,
+  getHearingById,
+  updateHearing,
+  cancelHearing,
+  updateHearingStatus,
+} = require('../controllers/hearing.controller');
 const authenticate = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
 
+// All hearing endpoints require authentication
 router.use(authenticate);
 
-// Hearings calendar access
-router.get('/', (req, res) => {
-  return sendSuccess(res, [], 'Hearings route initialized', 200);
-});
+// List Hearings (Role-scoped at controller level)
+router.get('/', getHearings);
 
-// Admin, Lawyer, and Clerk can schedule hearings
-router.post('/', authorizeRoles('ADMIN', 'LAWYER', 'CLERK'), (req, res) => {
-  return sendSuccess(res, null, 'Schedule hearing route initialized', 201);
-});
+// Schedule Hearing (Admin, Clerk, Lawyer)
+router.post('/', authorizeRoles('ADMIN', 'CLERK', 'LAWYER'), createHearing);
+
+// View Hearing by ID (Role-scoped at controller level)
+router.get('/:id', getHearingById);
+
+// Reschedule / Update Hearing (Admin, Clerk, Lawyer)
+router.put('/:id', authorizeRoles('ADMIN', 'CLERK', 'LAWYER'), updateHearing);
+
+// Cancel Hearing (Admin, Clerk, Lawyer)
+router.delete('/:id', authorizeRoles('ADMIN', 'CLERK', 'LAWYER'), cancelHearing);
+
+// Update Status Specifically (SCHEDULED, ADJOURNED, COMPLETED, CANCELLED)
+router.patch('/:id/status', authorizeRoles('ADMIN', 'CLERK', 'LAWYER'), updateHearingStatus);
 
 module.exports = router;
