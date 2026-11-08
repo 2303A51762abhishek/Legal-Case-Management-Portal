@@ -12,7 +12,8 @@
     "test:cases": "node src/utils/verify_phase6.js",
     "test:hearings": "node src/utils/verify_phase7.js",
     "test:phase8": "node src/utils/verify_phase8.js",
-    "test:reports": "node src/utils/verify_phase9.js"
+    "test:reports": "node src/utils/verify_phase9.js",
+    "test:phase10": "node src/utils/verify_phase10.js"
   },
   "keywords": [
     "legal",

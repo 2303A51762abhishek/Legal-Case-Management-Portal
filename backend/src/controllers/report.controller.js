@@ -135,16 +135,15 @@ const getCaseStatusReport = async (req, res) => {
         .sort((a, b) => new Date(a.hearingDate) - new Date(b.hearingDate));
       const nextHearing = futureHearings[0] || null;
 
-      // Stats accumulation
-      if (['FILED', 'UNDER_REVIEW', 'HEARING_IN_PROGRESS'].includes(c.status)) {
+      // Stats accumulation: strictly mutually exclusive partitioning so active + pending + closed = total
+      if (['HEARING_IN_PROGRESS', 'APPEALED'].includes(c.status)) {
         activeCases++;
-      }
-      if (['FILED', 'UNDER_REVIEW'].includes(c.status)) {
+      } else if (['FILED', 'UNDER_REVIEW'].includes(c.status)) {
         pendingCases++;
-      }
-      if (['CLOSED', 'JUDGMENT_RESERVED'].includes(c.status)) {
+      } else if (['CLOSED', 'JUDGMENT_RESERVED'].includes(c.status)) {
         closedCases++;
       }
+
       if (['HIGH', 'URGENT'].includes(c.priority)) {
         highPriorityCases++;
       }

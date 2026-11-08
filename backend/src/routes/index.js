@@ -11,10 +11,12 @@ const taskRoutes = require('./task.routes');
 const documentRoutes = require('./document.routes');
 const reportRoutes = require('./report.routes');
 const notificationRoutes = require('./notification.routes');
+const dashboardRoutes = require('./dashboard.routes');
 
 // Mount routes
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/users', userRoutes);
 router.use('/clients', clientRoutes);
 router.use('/cases', caseRoutes);

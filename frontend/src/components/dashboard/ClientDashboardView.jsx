@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
   Calendar,
@@ -9,186 +9,272 @@ import {
   CheckCircle2,
   ChevronRight,
   PhoneCall,
-  Info
+  RefreshCw,
+  AlertCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { StatCard } from '../common/StatCard';
 import { Badge } from '../common/Badge';
+import { Link } from 'react-router-dom';
+import api from '../../services/api';
 
 export const ClientDashboardView = () => {
-  const stats = [
-    { title: 'My Registered Cases', value: '2', subtitle: 'Under Active Representation', icon: Briefcase, color: 'blue' },
-    { title: 'Next Hearing Date', value: '10 Nov', subtitle: 'High Court of Judicature', icon: Calendar, color: 'amber' },
-    { title: 'Case Documents & Orders', value: '6', subtitle: 'Authorized for Client Access', icon: FileText, color: 'navy' },
-    { title: 'Legal Counsel', value: 'Assigned', subtitle: 'Adv. M. Abhishek (Lead)', icon: ShieldCheck, color: 'emerald' },
-  ];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const myCases = [
+  const fetchClientDashboard = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await api.get('/dashboard/client');
+      if (res.data?.success) {
+        setData(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching client dashboard:', err);
+      setError(err.response?.data?.message || 'Failed to load client portal dashboard.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClientDashboard();
+  }, []);
+
+  const handleDownloadDoc = async (docId, fileName) => {
+    try {
+      const res = await api.get(`/documents/${docId}/download`, { responseType: 'blob' });
+      const blob = new Blob([res.data]);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName || 'case_document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      alert('Unable to download document. Please contact your assigned counsel.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-24 text-center bg-white rounded-2xl border border-slate-200/90 shadow-sm">
+        <RefreshCw className="w-10 h-10 text-blue-900 animate-spin mx-auto mb-3" />
+        <h3 className="text-base font-bold text-slate-800">Synchronizing Your Legal Dockets...</h3>
+        <p className="text-xs text-slate-500 mt-1">Connecting to authenticated court registry and legal counsel updates</p>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="p-8 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-3">
+        <AlertCircle className="w-10 h-10 text-rose-600 mx-auto" />
+        <h3 className="text-sm font-bold text-rose-900">Dashboard Synchronization Failed</h3>
+        <p className="text-xs text-rose-700 max-w-md mx-auto">{error || 'Unable to retrieve client records.'}</p>
+        <button
+          onClick={fetchClientDashboard}
+          className="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
+
+  const { stats, clientProfile, myCases, upcomingHearings, actionItems, sharedDocuments } = data;
+
+  const statCards = [
     {
-      id: 'LCMS-2026-0104',
-      title: 'Apex Technologies vs. State Revenue Dept',
-      court: 'High Court Bench 4, Hyderabad',
-      lawyer: 'Adv. Mamillapally Abhishek',
-      phone: '+91 98765 43210',
-      status: 'Hearing In Progress',
-      currentStage: 'Final Arguments on Tax Exemption',
-      steps: [
-        { label: 'Petition Filed', completed: true, date: '12 Sep 2026' },
-        { label: 'Notice Issued', completed: true, date: '01 Oct 2026' },
-        { label: 'Hearing & Arguments', completed: true, date: 'Current Stage' },
-        { label: 'Final Judgment', completed: false, date: 'Pending' },
-      ],
+      title: 'My Registered Cases',
+      value: String(stats.totalCases),
+      subtitle: `${stats.activeCases} Active Representation`,
+      icon: Briefcase,
+      color: 'blue',
     },
     {
-      id: 'LCMS-2026-0062',
-      title: 'Zenith Tech vs. Global Logistics Partners',
-      court: 'Commercial Court at Nampally',
-      lawyer: 'Adv. Rajeshwar Sharma',
-      phone: '+91 98111 22334',
-      status: 'Under Review',
-      currentStage: 'Filing of Rebuttal Statement',
-      steps: [
-        { label: 'Petition Filed', completed: true, date: '15 Oct 2026' },
-        { label: 'Notice Issued', completed: true, date: '28 Oct 2026' },
-        { label: 'Hearing & Arguments', completed: false, date: 'Next Step' },
-        { label: 'Final Judgment', completed: false, date: 'Pending' },
-      ],
-    }
-  ];
-
-  const sharedDocuments = [
-    { name: 'Writ_Petition_Final_Stamped.pdf', caseId: 'LCMS-2026-0104', size: '2.4 MB', date: '02 Nov 2026' },
-    { name: 'Vakalatnama_Certified_Copy.pdf', caseId: 'LCMS-2026-0104', size: '850 KB', date: '14 Sep 2026' },
-    { name: 'Interim_Injunction_Stay_Order.pdf', caseId: 'LCMS-2026-0104', size: '1.2 MB', date: '20 Oct 2026' },
-    { name: 'Commercial_Agreement_Exhibit_A.pdf', caseId: 'LCMS-2026-0062', size: '3.8 MB', date: '18 Oct 2026' },
+      title: 'Upcoming Hearings',
+      value: String(stats.upcomingHearings),
+      subtitle: 'Scheduled Court Appearances',
+      icon: Calendar,
+      color: 'amber',
+    },
+    {
+      title: 'Client Action Items',
+      value: String(stats.clientTasks),
+      subtitle: `${stats.completedClientTasks} Finalized`,
+      icon: Clock,
+      color: 'rose',
+    },
+    {
+      title: 'Designated Counsel',
+      value: clientProfile?.assignedLawyer?.name ? 'Assigned' : 'Pending',
+      subtitle: clientProfile?.assignedLawyer?.name || 'Advocate being assigned',
+      icon: ShieldCheck,
+      color: 'emerald',
+    },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Client Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-6 text-white shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500 text-slate-950 uppercase tracking-wide">
-              CLIENT PORTAL ACCESS
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-slate-950 uppercase tracking-wide">
+              LITIGANT CLIENT PORTAL
             </span>
-            <span className="text-xs text-slate-300">Litigant: Vikramaditya Rao</span>
+            <span className="text-xs text-blue-300">Client: {clientProfile?.name || 'Litigant'}</span>
           </div>
-          <h1 className="text-2xl font-bold mt-2 tracking-tight">Your Legal Cases & Court Proceedings</h1>
+          <h1 className="text-2xl font-bold mt-2 tracking-tight">Case Tracking & Court Updates</h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Track real-time case milestones, review verified legal documents, and stay informed on upcoming court appearances without delay.
+            Monitor real-time litigation status, view upcoming court appearances, download authorized judicial orders, and communicate with your legal team.
           </p>
         </div>
 
-        <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/80 text-xs">
-          <p className="text-slate-400">Assigned Advocate Hotline:</p>
-          <p className="font-bold text-white text-sm mt-0.5 flex items-center gap-1.5">
-            <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> +91 98765 43210
-          </p>
-          <span className="text-[10px] text-blue-300">Adv. Mamillapally Abhishek</span>
-        </div>
+        {clientProfile?.assignedLawyer?.phone && (
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 text-left shrink-0">
+            <span className="text-[10px] uppercase font-bold text-amber-300 block">Designated Legal Counsel</span>
+            <span className="text-sm font-bold text-white block mt-0.5">
+              {clientProfile.assignedLawyer.name}
+            </span>
+            <span className="text-xs text-slate-200 flex items-center space-x-1 mt-1 font-mono">
+              <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{clientProfile.assignedLawyer.phone}</span>
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Stats Cards */}
+      {/* 4 Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {stats.map((s, idx) => (
+        {statCards.map((s, idx) => (
           <StatCard key={idx} {...s} />
         ))}
       </div>
 
-      {/* Main Grid: Case Progress Tracker & Document Vault */}
+      {/* Main Grid: My Cases & Hearings/Documents */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: My Cases with Visual Stages */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 tracking-tight">Case Progress Lifecycle</h3>
+        {/* Left 2 Cols: My Legal Cases */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight">My Active Legal Cases</h3>
+              <p className="text-xs text-slate-500">Live docket tracking & litigation milestone progress</p>
+            </div>
+            <Link
+              to="/cases"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              All My Cases <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
 
-          <div className="space-y-4">
-            {myCases.map((c) => (
-              <div
-                key={c.id}
-                className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-sm space-y-4"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-slate-100">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-xs font-bold text-blue-900">{c.id}</span>
-                      <Badge variant={c.status} size="sm">{c.status}</Badge>
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-1">{c.title}</h4>
-                    <p className="text-xs text-slate-500">{c.court}</p>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <span className="text-[11px] text-slate-400 block">Lead Advocate</span>
-                    <span className="text-xs font-semibold text-slate-800">{c.lawyer}</span>
-                  </div>
-                </div>
-
-                {/* Stage Steps Progress */}
-                <div>
-                  <p className="text-xs font-semibold text-slate-700 mb-2">
-                    Current Milestone: <span className="text-blue-700 font-bold">{c.currentStage}</span>
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-                    {c.steps.map((step, sIdx) => (
-                      <div
-                        key={sIdx}
-                        className={`p-2.5 rounded-lg border text-xs ${
-                          step.completed
-                            ? 'bg-blue-50 border-blue-200 text-blue-900'
-                            : 'bg-slate-50 border-slate-200 text-slate-400'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-1.5 font-semibold text-[11px]">
-                          {step.completed ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          ) : (
-                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          )}
-                          <span className="truncate">{step.label}</span>
-                        </div>
-                        <span className="text-[10px] block mt-1 text-slate-500">{step.date}</span>
+          <div className="p-5 divide-y divide-slate-100 flex-1 space-y-4">
+            {myCases.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">No cases currently registered for your account</div>
+            ) : (
+              myCases.map((c) => (
+                <div key={c._id} className="pt-4 first:pt-0 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">
+                          {c.caseReference}
+                        </span>
+                        <Badge variant={c.status} size="sm">
+                          {c.status}
+                        </Badge>
                       </div>
-                    ))}
+                      <h4 className="text-sm font-bold text-slate-900 mt-1">{c.title}</h4>
+                      <p className="text-xs text-slate-500">
+                        {c.courtName} • Counsel: <span className="text-slate-800 font-semibold">{c.lawyerName}</span>
+                      </p>
+                    </div>
+
+                    <div className="text-left sm:text-right shrink-0">
+                      <span className="text-xs font-bold text-blue-900 block">{c.stage}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{c.progress}% estimated progress</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-blue-900 h-2 rounded-full transition-all" style={{ width: `${c.progress}%` }} />
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
-        {/* Right 1 Col: Documents Available to Client */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-5 flex flex-col">
-          <div className="pb-3 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">Authorized Documents</h3>
-            <p className="text-xs text-slate-500">Certified copies and filed petitions</p>
-          </div>
+        {/* Right 1 Col: Hearings & Shared Documents */}
+        <div className="space-y-6">
+          {/* Upcoming Hearings */}
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Upcoming Hearings</h3>
+              <Link to="/hearings" className="text-xs font-semibold text-blue-600 hover:text-blue-800">
+                Cause Calendar
+              </Link>
+            </div>
 
-          <div className="divide-y divide-slate-100 mt-2 space-y-2 flex-1">
-            {sharedDocuments.map((doc, idx) => (
-              <div key={idx} className="pt-3 first:pt-0 flex items-center justify-between">
-                <div className="flex items-start space-x-2.5 min-w-0 pr-2">
-                  <FileText className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 truncate">{doc.name}</p>
-                    <span className="text-[11px] text-slate-400 block font-mono">{doc.caseId} • {doc.size}</span>
+            <div className="p-4 divide-y divide-slate-100">
+              {upcomingHearings.length === 0 ? (
+                <div className="py-4 text-center text-slate-400 text-xs">No scheduled court hearings</div>
+              ) : (
+                upcomingHearings.map((h) => (
+                  <div key={h._id} className="py-2.5 first:pt-0 last:pb-0 space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-mono font-bold text-blue-900">{h.caseReference}</span>
+                      <span className="font-mono font-semibold text-slate-700">
+                        {h.hearingDate} • {h.hearingTime}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">{h.purpose}</p>
+                    <p className="text-[10px] text-slate-500">
+                      {h.courtroom}, {h.courtName}
+                    </p>
                   </div>
-                </div>
-                <button
-                  title="Download Document"
-                  className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shrink-0"
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="mt-5 p-3 rounded-lg bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 flex items-start space-x-2">
-            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Court Appearance Notice</p>
-              <p className="text-[11px] text-amber-800 mt-0.5">
-                Physical presence for hearing on 10 Nov is required only if notified by your lead counsel.
-              </p>
+          {/* Authorized Case Documents */}
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Authorized Documents</h3>
+              <Link to="/documents" className="text-xs font-semibold text-blue-600 hover:text-blue-800">
+                All Files
+              </Link>
+            </div>
+
+            <div className="p-4 divide-y divide-slate-100">
+              {sharedDocuments.length === 0 ? (
+                <div className="py-4 text-center text-slate-400 text-xs">No documents available yet</div>
+              ) : (
+                sharedDocuments.map((d) => (
+                  <div key={d._id} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{d.title}</p>
+                      <span className="text-[10px] text-slate-400 font-mono block">
+                        {d.fileName} • {d.uploadDate}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleDownloadDoc(d._id, d.fileName)}
+                      className="p-1.5 text-blue-900 hover:bg-blue-50 rounded-lg border border-blue-200/60 transition-colors shrink-0"
+                      title="Download Document"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -196,5 +282,3 @@ export const ClientDashboardView = () => {
     </div>
   );
 };
-
-export default ClientDashboardView;

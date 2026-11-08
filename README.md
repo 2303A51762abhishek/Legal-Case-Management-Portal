@@ -318,7 +318,39 @@ Verifies:
 
 ---
 
-## 11. How to Run the Servers
+## 11. Complete Integration & All Role Dashboard Architecture (Phase 10)
+
+1. **Role-Specific Dashboard REST APIs (`dashboard.controller.js` & `dashboard.routes.js`)**:
+   - `GET /api/dashboard/admin` (ADMIN only): Firm-wide governance metrics (Total Users, Lawyers, Clerks, Clients, Cases, Trials, Scrutiny, Decided, Upcoming Hearings, Overdue Tasks), Case Status Distribution chart array, Task Priority Breakdown, Recent Dockets, and Hearing Rosters.
+   - `GET /api/dashboard/lawyer` (LAWYER only): Assigned Caseload, Active Trials, Scrutiny Matters, Upcoming Court Appearances, Pending/Overdue Tasks, and Stage Progress bars.
+   - `GET /api/dashboard/client` (CLIENT only): Litigant-specific overview with active legal dockets, lead advocate contact details, upcoming hearings, client action items, and public non-confidential case documents with streaming download links.
+   - `GET /api/dashboard/clerk` (CLERK only): Court registry metrics (Cases registered today, hearings scheduled today, daily cause roster with courtroom bench numbers, and pending procedural registry tasks).
+2. **Data Consistency Audit & Partitioning**:
+   - Reconciled caseload categorization so that categories are strictly mutually exclusive:
+     $$\text{Active Trials} + \text{Pending Scrutiny} + \text{Closed Matters} = \text{Total Cases}$$
+   - Unified task overdue logic: A task is overdue if and only if $\text{status} \neq \text{'COMPLETED'}$ and $\text{deadline} < \text{Date.now()}$.
+   - Unified hearing schedule logic: Only hearings with status $\text{'SCHEDULED'}$ and future dates are counted as upcoming; cancelled and completed hearings are excluded from active cause lists.
+3. **Frontend Integration Across Views**:
+   - [`AdminDashboardView.jsx`](file:///Users/abhishekmamillapally/Desktop/Legal-Case-Management-Portal/frontend/src/components/dashboard/AdminDashboardView.jsx): Live MongoDB aggregates, status distribution grid, and recent filings table.
+   - [`LawyerDashboardView.jsx`](file:///Users/abhishekmamillapally/Desktop/Legal-Case-Management-Portal/frontend/src/components/dashboard/LawyerDashboardView.jsx): Designated dockets, stage completion progress bars, cause dates, and urgent tasks.
+   - [`ClientDashboardView.jsx`](file:///Users/abhishekmamillapally/Desktop/Legal-Case-Management-Portal/frontend/src/components/dashboard/ClientDashboardView.jsx): Assigned counsel card with direct contact info, stage milestone progress bars, and secure document downloads.
+   - [`ClerkDashboardView.jsx`](file:///Users/abhishekmamillapally/Desktop/Legal-Case-Management-Portal/frontend/src/components/dashboard/ClerkDashboardView.jsx): Intake counts, daily cause list with bench numbers, and registry task queue.
+
+### Run the Automated Phase 10 Integration Test Suite
+```bash
+cd backend
+npm run test:phase10
+```
+Verifies:
+- All 4 role dashboard endpoints (`/admin`, `/lawyer`, `/client`, `/clerk`)
+- Strict RBAC boundary enforcement (HTTP 403 Forbidden on cross-role access)
+- Data consistency equation ($\text{Active} + \text{Pending} + \text{Closed} \equiv \text{Total Cases}$)
+- Live mutation reaction: registering a case immediately increments admin and clerk metrics
+- Client confidentiality guard (zero leakage of internal tasks or privileged documents)
+
+---
+
+## 12. How to Run the Servers
 
 ### A. Running the React Frontend (Phase 2)
 ```bash
@@ -338,7 +370,7 @@ Backend runs on **`http://127.0.0.1:5000`**.
 
 ---
 
-## 12. Health Check Verification
+## 13. Health Check Verification
 
 ```bash
 curl -s http://127.0.0.1:5000/api/health
