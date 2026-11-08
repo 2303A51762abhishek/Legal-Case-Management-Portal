@@ -543,7 +543,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`frontend`** | `jurisflow-frontend` | `nginx:alpine` (multi-stage) | 80 | `3000` | Nginx web server, SPA routing, reverse proxy `/api/` |
 | **`backend`** | `jurisflow-backend` | `node:20-alpine` | 5000 | `5001` (avoids macOS AirPlay 5000 collision) | Express.js REST API with Mongoose and Multer |
-| **`mongodb`** | `jurisflow-mongodb` | `mongo:7.0` | 27017 | `27017` | Persistent MongoDB database with root credentials |
+| **`mongodb`** | `jurisflow-mongodb` | `mongo:7.0` | 27017 | `127.0.0.1:27017` (strictly loopback, no 0.0.0.0) | Persistent MongoDB database with root credentials |
 
 ### 16.3 Production Dockerfiles
 
