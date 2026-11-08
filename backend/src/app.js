@@ -1,0 +1,67 @@
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+const config = require('./config/env');
+const routes = require('./routes');
+const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
+
+const app = express();
+
+// 1. Security HTTP Headers
+app.use(helmet());
+
+// 2. Cross-Origin Resource Sharing (CORS) Configuration
+const allowedOrigins = [
+  config.clientOrigin,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || config.env === 'development') {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS Policy: Request origin not allowed.'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
+// 3. HTTP Request Logging
+if (config.env !== 'test') {
+  app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
+}
+
+// 4. Request Body Parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 5. Static Files Serving (Uploaded Documents)
+app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
+
+// 6. Base API Router
+app.use('/api', routes);
+
+// 7. Root Route Redirection / Info
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    portal: 'Legal Case and Court Hearing Management Portal API',
+    student: config.project.student,
+    rollNumber: config.project.roll,
+    academicYear: config.project.academicYear,
+    healthCheck: '/api/health',
+  });
+});
+
+// 8. 404 & Centralized Error Handlers
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+module.exports = app;
