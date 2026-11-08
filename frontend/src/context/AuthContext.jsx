@@ -1,84 +1,105 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext(null);
 
-// Default mock profiles for each role to demonstrate the Phase 2 UI
-export const DEMO_PROFILES = {
-  ADMIN: {
-    _id: 'usr_admin_01',
-    name: 'Adv. Rajeshwar Sharma',
-    email: 'admin@jurismanagement.in',
-    role: 'ADMIN',
-    designation: 'Managing Partner & Chief Administrator',
-    avatar: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?w=150&auto=format&fit=crop&q=80',
-    badge: 'Senior Advocate / Administrator'
-  },
-  LAWYER: {
-    _id: 'usr_lawyer_01',
-    name: 'Adv. Mamillapally Abhishek',
-    email: 'abhishek@jurismanagement.in',
-    role: 'LAWYER',
-    designation: 'Senior Litigation Counsel (Bar ID: TS/2026/51762)',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    badge: 'High Court Counsel'
-  },
-  CLIENT: {
-    _id: 'usr_client_01',
-    name: 'Vikramaditya Rao',
-    email: 'vikram.rao@enterprise.com',
-    role: 'CLIENT',
-    designation: 'Director, Zenith Technologies Ltd',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    badge: 'Corporate Litigant'
-  },
-  CLERK: {
-    _id: 'usr_clerk_01',
-    name: 'Suresh Chandra',
-    email: 'suresh.clerk@jurismanagement.in',
-    role: 'CLERK',
-    designation: 'Registrar & Court Records Clerk',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    badge: 'Bench Clerk'
-  }
-};
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('juris_user');
-    return saved ? JSON.parse(saved) : DEMO_PROFILES.ADMIN;
-  });
-  const [token, setToken] = useState(() => localStorage.getItem('juris_token') || 'demo_jwt_token_phase2');
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('juris_token') || null);
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
+  // Restore authenticated session from backend on page refresh
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('juris_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('juris_user');
-    }
-  }, [user]);
+    const restoreSession = async () => {
+      const storedToken = localStorage.getItem('juris_token');
+      if (!storedToken) {
+        setLoading(false);
+        return;
+      }
 
-  // Role Switcher for Phase 2 UI Testing
-  const switchRole = (newRole) => {
-    if (DEMO_PROFILES[newRole]) {
-      setUser(DEMO_PROFILES[newRole]);
+      try {
+        const response = await api.get('/auth/me');
+        if (response.data && response.data.data && response.data.data.user) {
+          setUser(response.data.data.user);
+        }
+      } catch (err) {
+        console.warn('Session expired or invalid token. Clearing credentials.');
+        localStorage.removeItem('juris_token');
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  // Real Backend Login
+  const login = async (email, password) => {
+    setAuthError(null);
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user: userData, token: jwtToken } = response.data.data;
+
+      setUser(userData);
+      setToken(jwtToken);
+      localStorage.setItem('juris_token', jwtToken);
+      return { success: true, user: userData };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || 'Login failed. Please check your credentials or network.';
+      setAuthError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  const login = (userData, jwtToken) => {
-    setUser(userData);
-    setToken(jwtToken);
-    localStorage.setItem('juris_token', jwtToken);
+  // Real Backend Registration (Strictly CLIENT role)
+  const register = async (userData) => {
+    setAuthError(null);
+    try {
+      const response = await api.post('/auth/register', userData);
+      const { user: newUser, token: jwtToken } = response.data.data;
+
+      setUser(newUser);
+      setToken(jwtToken);
+      localStorage.setItem('juris_token', jwtToken);
+      return { success: true, user: newUser };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || 'Registration failed. Please try again.';
+      setAuthError(errorMessage);
+      throw new Error(errorMessage);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('juris_token');
-    localStorage.removeItem('juris_user');
+  // Real Backend Logout
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      console.warn('Logout API call failed, clearing client state regardless.');
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('juris_token');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, switchRole, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        authError,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

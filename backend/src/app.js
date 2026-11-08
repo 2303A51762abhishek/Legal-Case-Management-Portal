@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const config = require('./config/env');
 const routes = require('./routes');
@@ -38,7 +39,8 @@ if (config.env !== 'test') {
   app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 }
 
-// 4. Request Body Parsing
+// 4. Request Body Parsing & Cookies
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

@@ -2,23 +2,33 @@ const { verifyToken } = require('../services/jwt.service');
 const { sendError } = require('../utils/response');
 
 /**
- * Authentication Middleware: Validates Bearer JWT in request header
+ * Authentication Middleware: Validates Bearer JWT header or HttpOnly cookie
  */
 const authenticate = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    let token = null;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return sendError(res, 'Authentication required. No Bearer token provided in Authorization header.', 401);
+    // 1. Check Authorization Bearer Header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
     }
 
-    const token = authHeader.split(' ')[1];
+    // 2. Fallback to HttpOnly Cookie if header not present
+    if (!token && req.cookies && req.cookies.juris_token) {
+      token = req.cookies.juris_token;
+    }
+
     if (!token) {
-      return sendError(res, 'Authentication token format invalid.', 401);
+      return sendError(
+        res,
+        'Authentication required. Please log in to access this legal docket resource.',
+        401
+      );
     }
 
     const decoded = verifyToken(token);
-    req.user = decoded; // Contains id, email, role, etc.
+    req.user = decoded; // { id, role, email, name }
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

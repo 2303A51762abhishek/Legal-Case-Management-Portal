@@ -6,18 +6,16 @@ import {
   CheckCircle2,
   Calendar,
   AlertTriangle,
-  UserCheck,
-  ChevronDown
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from './Badge';
 
 export const Navbar = ({ setIsMobileOpen }) => {
-  const { user, switchRole } = useAuth();
+  const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
 
-  // Mock Notifications for UI Demonstration
+  // In-app notifications
   const mockNotifications = [
     {
       id: 1,
@@ -60,65 +58,14 @@ export const Navbar = ({ setIsMobileOpen }) => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search cases, hearings, or client records (e.g. CASE-2026)..."
+            placeholder="Search cases, hearings, or client records (e.g. LCMS-2026)..."
             className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white text-slate-800 placeholder-slate-400 transition-all"
           />
         </div>
       </div>
 
-      {/* Right Controls: Role Switcher Pill + Notifications + Profile */}
-      <div className="flex items-center space-x-3">
-        {/* Quick Role Switcher Pill (Dev & Evaluation Feature) */}
-        <div className="relative">
-          <div className="hidden md:flex items-center space-x-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-            <span className="text-[11px] font-semibold text-slate-500 px-2 flex items-center gap-1">
-              <UserCheck className="w-3.5 h-3.5 text-blue-600" /> View Role:
-            </span>
-            {['ADMIN', 'LAWYER', 'CLIENT', 'CLERK'].map((role) => (
-              <button
-                key={role}
-                onClick={() => switchRole(role)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                  user?.role === role
-                    ? 'bg-blue-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                }`}
-              >
-                {role}
-              </button>
-            ))}
-          </div>
-
-          {/* Mobile Role Switcher Dropdown */}
-          <div className="md:hidden relative">
-            <button
-              onClick={() => setShowRoleMenu(!showRoleMenu)}
-              className="flex items-center space-x-1 text-xs font-semibold px-2.5 py-1.5 bg-slate-100 rounded-lg text-slate-700"
-            >
-              <span>{user?.role}</span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-            {showRoleMenu && (
-              <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-50">
-                {['ADMIN', 'LAWYER', 'CLIENT', 'CLERK'].map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => {
-                      switchRole(role);
-                      setShowRoleMenu(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-xs font-medium ${
-                      user?.role === role ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
+      {/* Right Controls: Notifications + Profile */}
+      <div className="flex items-center space-x-4">
         {/* In-App Notifications Dropdown */}
         <div className="relative">
           <button
@@ -165,16 +112,18 @@ export const Navbar = ({ setIsMobileOpen }) => {
           )}
         </div>
 
-        {/* Current User Pill */}
-        <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
-          <img
-            src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
-            alt={user?.name}
-            className="w-8 h-8 rounded-full object-cover border border-slate-300"
-          />
-          <div className="hidden lg:block text-left">
-            <span className="text-xs font-semibold text-slate-800 block leading-tight">{user?.name}</span>
-            <span className="text-[10px] text-slate-500 font-medium block">{user?.role}</span>
+        {/* Current Authenticated User Badge */}
+        <div className="flex items-center space-x-2 pl-3 border-l border-slate-200">
+          <div className="w-8 h-8 rounded-full bg-blue-900 text-white font-bold text-xs flex items-center justify-center border border-slate-300">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <div className="text-left">
+            <span className="text-xs font-semibold text-slate-800 block leading-tight">{user?.name || 'User'}</span>
+            <div className="mt-0.5">
+              <Badge variant={user?.role || 'CLIENT'} size="sm">
+                {user?.role || 'CLIENT'}
+              </Badge>
+            </div>
           </div>
         </div>
       </div>

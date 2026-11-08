@@ -59,6 +59,7 @@ const connectDB = async () => {
   try {
     console.log(`🔌 Attempting to connect to MongoDB at: ${uri.replace(/\/\/.*@/, '//***:***@')}`);
     await mongoose.connect(uri, {
+      dbName: 'legal_case_management_db',
       serverSelectionTimeoutMS: 2500,
     });
     return getDBStatus();
@@ -81,6 +82,7 @@ const connectDB = async () => {
         console.log(`💡 In-Memory MongoDB running for local development: ${memoryUri}`);
 
         await mongoose.connect(memoryUri, {
+          dbName: 'legal_case_management_db',
           serverSelectionTimeoutMS: 5000,
         });
         return getDBStatus();

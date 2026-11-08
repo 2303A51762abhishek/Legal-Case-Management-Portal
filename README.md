@@ -133,7 +133,35 @@ Verifies:
 
 ---
 
-## 6. How to Run the Servers
+## 6. Authentication & Security Architecture (Phase 5)
+
+The authentication system implements industry-grade web security:
+
+1. **Cryptographic Password Hashing**: Passwords hashed with `bcryptjs` using 10 salt rounds. Plaintext passwords are never stored or logged.
+2. **Dual-Channel JWT Delivery**: Signed tokens are delivered both in the JSON payload (for Axios request headers) and via **HttpOnly cookies** (`SameSite: 'lax'`, `maxAge: 24h`) to prevent XSS credential theft.
+3. **Anti-Privilege Escalation**: The public registration endpoint (`/api/auth/register`) strictly forces the `CLIENT` role. Attempting to inject `ADMIN`, `LAWYER`, or `CLERK` in public payloads is actively disregarded.
+4. **Administrative User Provisioning**: Only authenticated `ADMIN` users can access `POST /api/users` to create advocates, registry clerks, and firm administrators.
+5. **Brute Force Rate Limiting**: The `/api/auth/*` endpoints are protected by an express rate limiter allowing at most 30 attempts per 15 minutes per IP address.
+6. **Session Restoration**: On page reload or browser restart, the React application automatically calls `GET /api/auth/me` to rehydrate user profiles without re-entering credentials.
+
+### Run the Automated Phase 5 Authentication & RBAC Test Suite
+```bash
+cd backend
+npm run test:auth
+```
+Verifies:
+- Login authentication across all 4 roles (`ADMIN`, `LAWYER`, `CLIENT`, `CLERK`)
+- 401 rejection on invalid passwords or non-existent accounts
+- Anti-privilege escalation guard enforcement
+- 409 rejection on duplicate registration attempts
+- Session recovery via `/api/auth/me`
+- Tampered JWT token rejection
+- Strict 403 Forbidden blocking on unauthorized role access (`/api/users`)
+- Administrative privileged user creation
+
+---
+
+## 7. How to Run the Servers
 
 ### A. Running the React Frontend (Phase 2)
 ```bash

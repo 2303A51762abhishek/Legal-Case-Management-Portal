@@ -1,6 +1,8 @@
 const app = require('./app');
 const config = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
+const { User } = require('./models');
+const seedDatabase = require('./utils/seed');
 
 const PORT = config.port || 5000;
 const HOST = config.host || '127.0.0.1';
@@ -11,6 +13,13 @@ let server;
 const startServer = async () => {
   try {
     await connectDB();
+
+    // Auto-seed demo accounts if database is fresh
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      console.log('🌱 Fresh database detected. Auto-seeding initial demo records...');
+      await seedDatabase(false);
+    }
 
     server = app.listen(PORT, HOST, () => {
       console.log('====================================================');
