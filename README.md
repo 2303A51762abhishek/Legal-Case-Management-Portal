@@ -617,3 +617,130 @@ npm run test:phase11
 # 6. Run the End-to-End Browser Test Suite against the Container Stack
 npm run test:e2e
 ```
+
+---
+
+## 17. Kubernetes Manifests & Orchestration (Phase 13)
+
+JurisFlow includes a complete, production-grade Kubernetes manifest suite located in the [`kubernetes/`](kubernetes/) directory for multi-tier cluster orchestration.
+
+### 17.1 Kubernetes Resource Architecture
+
+```mermaid
+flowchart TD
+    subgraph IngressGateway ["Cluster Ingress / Gateway"]
+        Ingress["jurisflow-ingress (Nginx Ingress / Port-Forward 3000)"]
+    end
+
+    subgraph K8sNamespace ["Namespace: jurisflow"]
+        subgraph FrontTier ["Frontend Tier (Stateless Replicas: 2)"]
+            FrontSvc["Service: frontend (ClusterIP: 80)"]
+            FrontDeploy["Deployment: frontend (Nginx + React SPA)"]
+        end
+
+        subgraph BackTier ["Backend Tier (Single-Writer: 1)"]
+            BackSvc["Service: backend (ClusterIP: 5000)"]
+            BackDeploy["Deployment: backend (Node.js 20 LTS API)"]
+            VaultMount["Mount: /usr/src/app/src/uploads"]
+        end
+
+        subgraph MongoTier ["Database Tier (StatefulSet: 1)"]
+            MongoSvc["Service: mongodb (ClusterIP: 27017)"]
+            MongoSS["StatefulSet: mongodb (mongo:7.0)"]
+            DBMount["Mount: /data/db"]
+        end
+
+        subgraph SecretsConfig ["Configuration"]
+            ConfigMap["ConfigMap: jurisflow-config"]
+            Secret["Secret: jurisflow-secrets"]
+        end
+    end
+
+    subgraph PVCTier ["Persistent Volume Claims"]
+        VaultPVC[("jurisflow-vault-pvc (2Gi)")]
+        MongoPVC[("mongodb-data-mongodb-0 (5Gi)")]
+    end
+
+    Ingress -->|Route / and /api| FrontSvc
+    FrontSvc --> FrontDeploy
+    FrontDeploy -->|http://backend:5000/api/| BackSvc
+    BackSvc --> BackDeploy
+    BackDeploy -->|mongodb.jurisflow.svc.cluster.local:27017| MongoSvc
+    MongoSvc --> MongoSS
+
+    BackDeploy --- VaultMount
+    VaultMount --- VaultPVC
+    MongoSS --- DBMount
+    DBMount --- MongoPVC
+
+    ConfigMap -.-> BackDeploy & MongoSS
+    Secret -.-> BackDeploy & MongoSS
+```
+
+### 17.2 Manifest Inventory
+
+| File Path | Kind | Name | Namespace | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`kubernetes/namespace.yaml`** | `Namespace` | `jurisflow` | N/A | Dedicated isolated namespace with student metadata labels |
+| **`kubernetes/configmap.yaml`** | `ConfigMap` | `jurisflow-config` | `jurisflow` | Non-sensitive configs (`NODE_ENV`, `PORT`, `MONGODB_DATABASE`, limits) |
+| **`kubernetes/secret.example.yaml`** | `Secret` | `jurisflow-secrets` | `jurisflow` | Safe secret template with placeholders (anti-leak guarded) |
+| **`kubernetes/mongodb/pvc.yaml`** | `PersistentVolumeClaim` | `mongodb-data-mongodb-0`| `jurisflow` | 5Gi persistent volume claim for MongoDB data (`/data/db`) |
+| **`kubernetes/mongodb/service.yaml`** | `Service` | `mongodb` | `jurisflow` | Internal `ClusterIP` on port 27017 (no public exposure) |
+| **`kubernetes/mongodb/statefulset.yaml`**| `StatefulSet` | `mongodb` | `jurisflow` | MongoDB 7.0 StatefulSet with `volumeClaimTemplates` & probes |
+| **`kubernetes/backend/pvc.yaml`** | `PersistentVolumeClaim` | `jurisflow-vault-pvc` | `jurisflow` | 2Gi persistent volume claim for Document Vault uploads |
+| **`kubernetes/backend/service.yaml`** | `Service` | `backend` | `jurisflow` | Internal `ClusterIP` on port 5000 (`backend.jurisflow.svc.cluster.local`) |
+| **`kubernetes/backend/deployment.yaml`** | `Deployment` | `backend` | `jurisflow` | Express REST API, non-root user `node` (UID 1000), 3 probes |
+| **`kubernetes/frontend/service.yaml`** | `Service` | `frontend` | `jurisflow` | `ClusterIP` on port 80 routing web traffic to frontend pods |
+| **`kubernetes/frontend/deployment.yaml`**| `Deployment` | `frontend` | `jurisflow` | 2 stateless replicas, Nginx reverse proxy, `/healthz` probes |
+| **`kubernetes/ingress.yaml`** | `Ingress` | `jurisflow-ingress` | `jurisflow` | Nginx Ingress routing `jurisflow.local` with 15MB upload limit |
+
+### 17.3 Deployment Commands (Quickstart)
+
+```bash
+# 1. Create the dedicated namespace
+kubectl apply -f kubernetes/namespace.yaml
+
+# 2. Apply non-sensitive configuration
+kubectl apply -f kubernetes/configmap.yaml
+
+# 3. Create the Kubernetes Secret (imperative, never committed to git)
+kubectl create secret generic jurisflow-secrets \
+  --namespace=jurisflow \
+  --from-literal=mongo-root-username=admin \
+  --from-literal=mongo-root-password=LegalCaseSecure2026 \
+  --from-literal=jwt-secret=jurisflow_jwt_production_secret_key_2026_devops \
+  --from-literal=mongodb-uri="mongodb://admin:LegalCaseSecure2026@mongodb.jurisflow.svc.cluster.local:27017/legal_case_management_db?authSource=admin"
+
+# 4. Deploy MongoDB StatefulSet & Service
+kubectl apply -f kubernetes/mongodb/
+kubectl rollout status statefulset/mongodb -n jurisflow --timeout=120s
+
+# 5. Deploy Backend Deployment & Service
+kubectl apply -f kubernetes/backend/
+kubectl rollout status deployment/backend -n jurisflow --timeout=120s
+
+# 6. Deploy Frontend Deployment & Service
+kubectl apply -f kubernetes/frontend/
+kubectl rollout status deployment/frontend -n jurisflow --timeout=60s
+
+# 7. (Optional) Apply Ingress routing
+kubectl apply -f kubernetes/ingress.yaml
+```
+
+### 17.4 Accessing the Application in Kubernetes
+
+```bash
+# Forward frontend service to local port 3000:
+kubectl port-forward svc/frontend 3000:80 -n jurisflow
+
+# Open in browser:
+# http://localhost:3000/
+```
+
+### 17.5 Running the Automated Kubernetes Verification Suite
+
+```bash
+cd backend
+npm run test:kubernetes
+```
+

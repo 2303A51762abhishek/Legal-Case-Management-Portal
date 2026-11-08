@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-data-mongodb-0
+  namespace: jurisflow
+  labels:
+    app.kubernetes.io/name: jurisflow
+    app.kubernetes.io/component: mongodb
+    app.kubernetes.io/part-of: legal-case-management-portal
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

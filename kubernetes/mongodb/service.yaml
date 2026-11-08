@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: jurisflow
+  labels:
+    app.kubernetes.io/name: jurisflow
+    app.kubernetes.io/component: mongodb
+    app.kubernetes.io/part-of: legal-case-management-portal
+spec:
+  type: ClusterIP
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: 27017
+      protocol: TCP
+  selector:
+    app.kubernetes.io/component: mongodb

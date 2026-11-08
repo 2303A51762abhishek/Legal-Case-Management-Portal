@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jurisflow
+  labels:
+    app.kubernetes.io/name: jurisflow
+    app.kubernetes.io/part-of: legal-case-management-portal
+    student: mamillapally-abhishek
+    roll-number: "2303A51762"
+    academic-year: "2026-2027"

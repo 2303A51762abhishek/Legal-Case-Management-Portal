@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jurisflow-ingress
+  namespace: jurisflow
+  labels:
+    app.kubernetes.io/name: jurisflow
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: legal-case-management-portal
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 15m
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - host: jurisflow.local
+      http:
+        paths:
+          # Frontend SPA root & static assets (includes reverse proxy to backend)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+          # Direct backend API ingress rule (for external API consumers if desired)
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 5000
