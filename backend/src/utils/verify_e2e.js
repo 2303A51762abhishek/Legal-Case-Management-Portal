@@ -22,8 +22,8 @@ const fs = require('fs');
 const puppeteer = require('puppeteer-core');
 
 const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const FRONTEND_URL = 'http://localhost:3000';
-const API_BASE = 'http://127.0.0.1:5000/api';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const API_BASE = process.env.API_BASE || 'http://localhost:3000/api';
 const SCREENSHOTS_DIR = path.join(__dirname, '../../../docs/phase11/screenshots');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

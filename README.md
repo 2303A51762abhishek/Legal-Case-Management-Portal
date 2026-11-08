@@ -491,3 +491,129 @@ Expected output:
   }
 }
 ```
+
+---
+
+## 16. Docker & Docker Compose Containerization (Phase 12)
+
+JurisFlow is fully containerized using Docker and orchestrated with Docker Compose for production-grade, multi-container deployment.
+
+### 16.1 Architecture Overview
+
+```mermaid
+flowchart TD
+    subgraph Host ["Host Machine (macOS / Linux / Windows)"]
+        Browser["Web Browser (http://localhost:3000)"]
+    end
+
+    subgraph DockerBridge ["Docker Bridge Network (jurisflow-network)"]
+        subgraph FrontendContainer ["Frontend Container (jurisflow-frontend)"]
+            Nginx["Nginx Reverse Proxy & Static Server (Port 80)"]
+            StaticAssets["Compiled React SPA (Vite / HTML / JS / CSS)"]
+        end
+
+        subgraph BackendContainer ["Backend Container (jurisflow-backend)"]
+            Express["Node.js + Express.js API (Port 5000)"]
+            Healthcheck["Internal Healthcheck (/api/health)"]
+            NonRootUser["Runs as Non-Root User: node (UID 1000)"]
+        end
+
+        subgraph DBContainer ["Database Container (jurisflow-mongodb)"]
+            MongoDaemon["MongoDB 7.0 Engine (Port 27017)"]
+            AuthEngine["SCRAM-SHA-256 Authentication"]
+        end
+    end
+
+    subgraph NamedVolumes ["Persistent Docker Volumes"]
+        VolDB[("mongodb_data -> /data/db")]
+        VolDocs[("document_vault -> /usr/src/app/src/uploads")]
+    end
+
+    Browser -->|Port 3000| Nginx
+    Nginx -->|Serve SPA Routes| StaticAssets
+    Nginx -->|Proxy /api/* to http://backend:5000/api/| Express
+    Express -->|Authenticate & Query| MongoDaemon
+    MongoDaemon --- VolDB
+    Express --- VolDocs
+```
+
+### 16.2 Services & Ports
+
+| Service | Container Name | Base Image | Internal Port | Host Port | Purpose |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`frontend`** | `jurisflow-frontend` | `nginx:alpine` (multi-stage) | 80 | `3000` | Nginx web server, SPA routing, reverse proxy `/api/` |
+| **`backend`** | `jurisflow-backend` | `node:20-alpine` | 5000 | `5001` (avoids macOS AirPlay 5000 collision) | Express.js REST API with Mongoose and Multer |
+| **`mongodb`** | `jurisflow-mongodb` | `mongo:7.0` | 27017 | `27017` | Persistent MongoDB database with root credentials |
+
+### 16.3 Production Dockerfiles
+
+- **Backend Dockerfile (`backend/Dockerfile`)**:
+  - Base: lightweight, official `node:20-alpine`.
+  - Installs production dependencies only via `npm ci --omit=dev`.
+  - Runs under the non-privileged `node` user for defense-in-depth container security.
+  - Features an integrated `HEALTHCHECK` checking `http://127.0.0.1:5000/api/health`.
+  - Excludes development secrets and test artifacts via `backend/.dockerignore`.
+
+- **Frontend Dockerfile (`frontend/Dockerfile`)**:
+  - Multi-stage build pattern:
+    - **Stage 1 (Builder)**: `node:20-alpine` installs dependencies and compiles the Vite SPA with `ARG VITE_API_URL=/api`.
+    - **Stage 2 (Runtime)**: Minimal `nginx:alpine` image serving static assets with custom `nginx.conf`.
+  - Features SPA fallback routing (`try_files $uri $uri/ /index.html`).
+  - Configures reverse proxy passing `/api/` to `http://backend:5000/api/` with streaming timeouts and a 15 MB client upload ceiling (`client_max_body_size 15M`).
+  - Provides lightweight container health check on `GET /healthz`.
+
+### 16.4 Persistent Data Volumes
+
+The Docker Compose configuration defines two named volumes to guarantee zero data loss across container lifecycle events:
+- **`mongodb_data`**: Bound to `/data/db` inside MongoDB. Preserves all legal dockets, users, hearings, and relational schemas.
+- **`document_vault`**: Bound to `/usr/src/app/src/uploads` inside the backend container. Preserves uploaded case petitions and legal briefs across container restarts and rebuilds.
+
+### 16.5 Docker Compose Management Commands
+
+```bash
+# 1. Build and start all three containers in background mode
+docker compose up --build -d
+
+# 2. Check operational status and healthcheck states
+docker compose ps
+
+# 3. View live unified logs across all services
+docker compose logs -f
+
+# 4. View logs for a specific service
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f mongodb
+
+# 5. Restart backend service (demonstrates volume persistence)
+docker compose restart backend
+
+# 6. Stop all containers without losing persistent database or documents
+docker compose down
+
+# CAUTION: Never pass -v unless you intentionally wish to delete all test data:
+# docker compose down -v  <-- Destroys named volumes
+```
+
+### 16.6 Testing and Verifying the Container Stack
+
+```bash
+# 1. Verify Frontend Nginx Healthcheck
+curl http://localhost:3000/healthz
+
+# 2. Verify Backend Health via Direct Host Port (5001)
+curl http://localhost:5001/api/health
+
+# 3. Verify Backend Health via Nginx Reverse Proxy (3000)
+curl http://localhost:3000/api/health
+
+# 4. Run the Automated Docker Verification Suite
+cd backend
+npm run test:docker
+
+# 5. Run the Phase 11 Test Suite against the Container Stack
+npm run test:phase11
+
+# 6. Run the End-to-End Browser Test Suite against the Container Stack
+npm run test:e2e
+```

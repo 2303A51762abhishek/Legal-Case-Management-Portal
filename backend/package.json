@@ -16,7 +16,8 @@
     "test:reports": "node src/utils/verify_phase9.js",
     "test:phase10": "node src/utils/verify_phase10.js",
     "test:phase11": "node src/utils/verify_phase11.js",
-    "test:e2e": "node src/utils/verify_e2e.js"
+    "test:e2e": "node src/utils/verify_e2e.js",
+    "test:docker": "node src/utils/verify_phase12_docker.js"
   },
   "keywords": [
     "legal",

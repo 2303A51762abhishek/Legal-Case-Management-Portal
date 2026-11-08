@@ -15,7 +15,7 @@
  * 7. Real-Time Performance Benchmarks on Large Demo Dataset
  */
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = process.env.API_BASE || 'http://localhost:3000/api';
 
 const runPhase11Tests = async () => {
   console.log('====================================================');
