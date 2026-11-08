@@ -57,7 +57,12 @@ spec:
               command:
                 - mongosh
                 - --quiet
-                - 127.0.0.1:27017/test
+                - -u
+                - $(MONGO_INITDB_ROOT_USERNAME)
+                - -p
+                - $(MONGO_INITDB_ROOT_PASSWORD)
+                - --authenticationDatabase
+                - admin
                 - --eval
                 - "quit(db.runCommand({ ping: 1 }).ok ? 0 : 1)"
             initialDelaySeconds: 20
@@ -69,7 +74,12 @@ spec:
               command:
                 - mongosh
                 - --quiet
-                - 127.0.0.1:27017/test
+                - -u
+                - $(MONGO_INITDB_ROOT_USERNAME)
+                - -p
+                - $(MONGO_INITDB_ROOT_PASSWORD)
+                - --authenticationDatabase
+                - admin
                 - --eval
                 - "quit(db.runCommand({ ping: 1 }).ok ? 0 : 1)"
             initialDelaySeconds: 10

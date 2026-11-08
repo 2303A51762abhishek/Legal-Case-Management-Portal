@@ -23,6 +23,8 @@ const allowedOrigins = [
   'http://localhost',
   'http://127.0.0.1',
   'http://frontend',
+  'http://jurisflow.local',
+  'https://jurisflow.local',
 ];
 
 app.use(cors({

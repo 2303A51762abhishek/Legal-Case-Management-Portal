@@ -624,6 +624,9 @@ npm run test:e2e
 
 JurisFlow includes a complete, production-grade Kubernetes manifest suite located in the [`kubernetes/`](kubernetes/) directory for multi-tier cluster orchestration.
 
+> [!NOTE]
+> **Cluster Deployment & Manifest Status:** All 13 Kubernetes manifests have been syntactically and structurally validated offline (`npm run test:kubernetes` — 78/78 assertions passed). A live cluster deployment has not yet been performed on this development machine.
+
 ### 17.1 Kubernetes Resource Architecture
 
 ```mermaid
@@ -703,13 +706,16 @@ kubectl apply -f kubernetes/namespace.yaml
 # 2. Apply non-sensitive configuration
 kubectl apply -f kubernetes/configmap.yaml
 
-# 3. Create the Kubernetes Secret (imperative, never committed to git)
+# 3. Create the Kubernetes Secret (imperative with locally generated random credentials)
+DB_PASSWORD=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9')
+JWT_SECRET=$(openssl rand -hex 32)
+
 kubectl create secret generic jurisflow-secrets \
   --namespace=jurisflow \
   --from-literal=mongo-root-username=admin \
-  --from-literal=mongo-root-password=LegalCaseSecure2026 \
-  --from-literal=jwt-secret=jurisflow_jwt_production_secret_key_2026_devops \
-  --from-literal=mongodb-uri="mongodb://admin:LegalCaseSecure2026@mongodb.jurisflow.svc.cluster.local:27017/legal_case_management_db?authSource=admin"
+  --from-literal=mongo-root-password="${DB_PASSWORD}" \
+  --from-literal=jwt-secret="${JWT_SECRET}" \
+  --from-literal=mongodb-uri="mongodb://admin:${DB_PASSWORD}@mongodb.jurisflow.svc.cluster.local:27017/legal_case_management_db?authSource=admin"
 
 # 4. Deploy MongoDB StatefulSet & Service
 kubectl apply -f kubernetes/mongodb/
@@ -743,4 +749,20 @@ kubectl port-forward svc/frontend 3000:80 -n jurisflow
 cd backend
 npm run test:kubernetes
 ```
+
+---
+
+## 18. Final Documentation & Project Deliverables (Phase 14)
+
+All final project artifacts, academic engineering reports, architectural designs, testing matrices, and viva voce preparation banks are organized in the [`docs/final/`](docs/final/) directory:
+
+| Deliverable Asset | Format | Description |
+| :--- | :---: | :--- |
+| **[Final Project Report](docs/final/final_project_report.md)** | Markdown / [PDF (663KB)](docs/final/final_project_report.pdf) | Complete 30-section academic engineering documentation matching B.Tech IV-I standards |
+| **[120 Viva Voce Q&A](docs/final/viva_questions_and_answers.md)** | Markdown | 120 detailed questions and answers covering all 27 required full-stack and DevOps topics |
+| **[System Architecture](docs/final/architecture/SYSTEM_ARCHITECTURE.md)** | Markdown / Mermaid | 6 architectural diagrams: System Tier Overview, Sequence Flow, MongoDB ER Schema, RBAC Matrix, Docker Compose, Kubernetes |
+| **[Operational Runbook](docs/final/deployment_guide.md)** | Markdown | Exact macOS commands for running Local, Docker Compose, and Kubernetes environments |
+| **[Comprehensive Test Summary](docs/final/testing_summary.md)** | Markdown | Phase 1–14 QA matrix distinguishing runtime automated tests from offline AST validation |
+| **[Visual Interface Screenshots](docs/final/screenshots/)** | PNG (1440×900) | 11 high-resolution verified screenshots covering all 4 role dashboards, cause lists, reports, vault, and alerts |
+
 

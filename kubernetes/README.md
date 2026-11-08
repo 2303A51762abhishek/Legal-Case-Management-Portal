@@ -5,6 +5,9 @@
 **Roll Number:** 2303A51762  
 **Course:** DevOps & Full Stack (B.Tech IV-I, 2026–2027)
 
+> [!NOTE]
+> **Cluster Deployment & Manifest Status:** All 13 Kubernetes manifests in this directory have been syntactically and structurally validated offline via client-side AST inspection and schema auditing (`npm run test:kubernetes` — 78/78 assertions passed). A live cluster deployment has not yet been performed on this development environment.
+
 ---
 
 ## 1. Kubernetes Architecture Overview
@@ -125,19 +128,24 @@ kubectl apply -f kubernetes/configmap.yaml
 
 ### Step 3: Create Kubernetes Secrets
 > [!IMPORTANT]
-> Never commit real credentials or secrets to version control.
+> Never commit real credentials or secrets to version control. Generate secure random secrets locally using `openssl`.
 
-Create the secret imperatively in the cluster:
+Generate secure local secrets on macOS / Linux:
 ```bash
+# Generate secure random strings
+DB_PASSWORD=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9')
+JWT_SECRET=$(openssl rand -hex 32)
+
+# Create the secret imperatively in the cluster
 kubectl create secret generic jurisflow-secrets \
   --namespace=jurisflow \
   --from-literal=mongo-root-username=admin \
-  --from-literal=mongo-root-password=LegalCaseSecure2026 \
-  --from-literal=jwt-secret=jurisflow_jwt_production_secret_key_2026_devops \
-  --from-literal=mongodb-uri="mongodb://admin:LegalCaseSecure2026@mongodb.jurisflow.svc.cluster.local:27017/legal_case_management_db?authSource=admin"
+  --from-literal=mongo-root-password="${DB_PASSWORD}" \
+  --from-literal=jwt-secret="${JWT_SECRET}" \
+  --from-literal=mongodb-uri="mongodb://admin:${DB_PASSWORD}@mongodb.jurisflow.svc.cluster.local:27017/legal_case_management_db?authSource=admin"
 ```
 
-*Alternatively, copy `secret.example.yaml` to `secret.yaml` (which is git-ignored), update the values, and run `kubectl apply -f kubernetes/secret.yaml`.*
+*Alternatively, copy `secret.example.yaml` to `secret.yaml` (which is git-ignored), update the placeholder values (`<GENERATE_SECURE_PASSWORD>`, `<GENERATE_JWT_SECRET>`), and run `kubectl apply -f kubernetes/secret.yaml`.*
 
 ### Step 4: Deploy MongoDB StatefulSet & Service
 ```bash
