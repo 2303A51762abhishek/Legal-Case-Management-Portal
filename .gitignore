@@ -48,5 +48,8 @@ Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
+
+# Scratch temporary test outputs
+scratch/
 *.sln
 *.sw?

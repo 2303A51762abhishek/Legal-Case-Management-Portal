@@ -15,6 +15,7 @@
     "test:phase8": "node src/utils/verify_phase8.js",
     "test:reports": "node src/utils/verify_phase9.js",
     "test:csv": "node src/utils/verify_csv_export.js",
+    "test:browser:csv": "node src/utils/verify_browser_csv_download.js",
     "test:phase10": "node src/utils/verify_phase10.js",
     "test:phase11": "node src/utils/verify_phase11.js",
     "test:e2e": "node src/utils/verify_e2e.js",

@@ -107,8 +107,8 @@ export const ReportsPage = () => {
     return `"${str}"`;
   };
 
-  // CSV Export Engine
-  const handleExportCSV = () => {
+  // Fallback client-side CSV generation if network is unavailable
+  const fallbackExportCSV = () => {
     let headers = [];
     let rows = [];
     let filename = '';
@@ -234,13 +234,10 @@ export const ReportsPage = () => {
       ]);
     }
 
-    // Format headers and rows into RFC 4180 compliant CSV string with UTF-8 BOM
     const headerLine = headers.map(escapeCSV).join(',');
     const rowLines = rows.map((e) => e.join(','));
     const csvContent = '\uFEFF' + [headerLine, ...rowLines].join('\r\n') + '\r\n';
 
-    // Use Blob and createObjectURL to guarantee complete, untruncated file download
-    // (Resolves data URI truncation at '#' characters in courtrooms/benches and URL length limits)
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -250,6 +247,62 @@ export const ReportsPage = () => {
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 200);
+  };
+
+  // Primary CSV Export Engine: Fetches complete RFC 4180 CSV stream from backend
+  const handleExportCSV = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      let endpoint = '';
+      let defaultFilename = '';
+
+      if (activeTab === 'case-status') {
+        endpoint = '/reports/case-status';
+        defaultFilename = `JurisFlow_Case_Status_Report_${today}.csv`;
+      } else if (activeTab === 'hearing-calendar') {
+        endpoint = '/reports/hearing-calendar';
+        defaultFilename = `JurisFlow_Hearing_Calendar_Report_${today}.csv`;
+      } else if (activeTab === 'pending-tasks') {
+        endpoint = '/reports/pending-tasks';
+        defaultFilename = `JurisFlow_Pending_Tasks_Report_${today}.csv`;
+      } else if (activeTab === 'client-summary') {
+        endpoint = '/reports/client-summary';
+        defaultFilename = `JurisFlow_Client_Summary_Report_${today}.csv`;
+      }
+
+      const params = { export: 'csv' };
+      if (filters.status && filters.status !== 'ALL') params.status = filters.status;
+      if (filters.priority && filters.priority !== 'ALL') params.priority = filters.priority;
+      if (filters.search) params.search = filters.search.trim();
+      if (filters.court) params.court = filters.court.trim();
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+
+      const res = await api.get(endpoint, {
+        params,
+        responseType: 'blob',
+      });
+
+      let filename = defaultFilename;
+      const disposition = res.headers ? (res.headers['content-disposition'] || res.headers['Content-Disposition']) : '';
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(url), 200);
+    } catch (err) {
+      console.error('Direct backend CSV export error, falling back to local generation:', err);
+      fallbackExportCSV();
+    }
   };
 
   // Printable PDF Export Engine
