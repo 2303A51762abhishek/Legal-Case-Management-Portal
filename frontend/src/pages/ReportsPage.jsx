@@ -234,17 +234,22 @@ export const ReportsPage = () => {
       ]);
     }
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+    // Format headers and rows into RFC 4180 compliant CSV string with UTF-8 BOM
+    const headerLine = headers.map(escapeCSV).join(',');
+    const rowLines = rows.map((e) => e.join(','));
+    const csvContent = '\uFEFF' + [headerLine, ...rowLines].join('\r\n') + '\r\n';
 
-    const encodedUri = encodeURI(csvContent);
+    // Use Blob and createObjectURL to guarantee complete, untruncated file download
+    // (Resolves data URI truncation at '#' characters in courtrooms/benches and URL length limits)
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
-    link.remove();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 200);
   };
 
   // Printable PDF Export Engine

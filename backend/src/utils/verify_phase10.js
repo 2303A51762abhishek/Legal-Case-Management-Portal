@@ -10,7 +10,7 @@
  * 7. Live Mutation Reaction: Case/Hearing/Task creation updates metrics in real time
  */
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = process.env.API_BASE || 'http://127.0.0.1:3000/api';
 
 const runPhase10Tests = async () => {
   console.log('🧪 Starting Phase 10 Full-Stack Integration & Role Dashboard Tests...\n');

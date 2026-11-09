@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { Case, Hearing, Task, Client, User } = require('../models');
 const { sendSuccess, sendError } = require('../utils/response');
+const { generateCSV, sendCSVResponse } = require('../utils/csvExport');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -185,6 +186,46 @@ const getCaseStatusReport = async (req, res) => {
       statusBreakdown,
     };
 
+    // Check for CSV export request
+    if (req.query.export === 'csv' || req.query.format === 'csv') {
+      const headers = [
+        'Case Reference',
+        'Case Title',
+        'Client Name',
+        'Assigned Lawyer',
+        'Court Name',
+        'Courtroom',
+        'Case Type',
+        'Filing Date',
+        'Status',
+        'Stage',
+        'Priority',
+        'Progress %',
+        'Last Hearing Date',
+        'Next Hearing Date',
+      ];
+      const rows = reportRows.map((c) => [
+        c.caseReference,
+        c.title,
+        c.clientName,
+        c.assignedLawyerName,
+        c.courtName,
+        c.courtroom,
+        c.caseType,
+        c.filingDate,
+        c.status,
+        c.stage,
+        c.priority,
+        `${c.progress}%`,
+        c.lastHearingDate,
+        c.nextHearingDate,
+      ]);
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `JurisFlow_Case_Status_Report_${today}.csv`;
+      const csvString = generateCSV(headers, rows);
+      return sendCSVResponse(res, filename, csvString);
+    }
+
     return sendSuccess(
       res,
       { reportName: 'Case Status Report', summary, cases: reportRows },
@@ -300,6 +341,44 @@ const getHearingCalendarReport = async (req, res) => {
       cancelledHearings: cancelledCount,
       courtComplexCount: courtSet.size,
     };
+
+    // Check for CSV export request
+    if (req.query.export === 'csv' || req.query.format === 'csv') {
+      const headers = [
+        'Hearing Date',
+        'Time',
+        'Duration (Mins)',
+        'Case Reference',
+        'Case Title',
+        'Client Name',
+        'Assigned Lawyer',
+        'Court Name',
+        'Courtroom',
+        'Judge Name',
+        'Purpose',
+        'Status',
+        'Next Hearing Date',
+      ];
+      const rows = reportRows.map((h) => [
+        h.hearingDate,
+        h.hearingTime,
+        h.durationMinutes,
+        h.caseReference,
+        h.caseTitle,
+        h.clientName,
+        h.assignedLawyerName,
+        h.courtName,
+        h.courtroom,
+        h.judgeName,
+        h.purpose,
+        h.status,
+        h.nextHearingDate,
+      ]);
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `JurisFlow_Hearing_Calendar_Report_${today}.csv`;
+      const csvString = generateCSV(headers, rows);
+      return sendCSVResponse(res, filename, csvString);
+    }
 
     return sendSuccess(
       res,
@@ -441,6 +520,38 @@ const getPendingTasksReport = async (req, res) => {
       urgent: urgentCount,
     };
 
+    // Check for CSV export request
+    if (req.query.export === 'csv' || req.query.format === 'csv') {
+      const headers = [
+        'Task Title',
+        'Case Reference',
+        'Case Title',
+        'Assigned User',
+        'Created By',
+        'Priority',
+        'Deadline',
+        'Status',
+        'Days Remaining',
+        'Is Overdue',
+      ];
+      const rows = reportRows.map((t) => [
+        t.title,
+        t.caseReference,
+        t.caseTitle,
+        t.assignedUserName,
+        t.createdByName,
+        t.priority,
+        t.deadline,
+        t.status,
+        t.daysRemaining,
+        t.isOverdue ? 'YES' : 'NO',
+      ]);
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `JurisFlow_Pending_Tasks_Report_${today}.csv`;
+      const csvString = generateCSV(headers, rows);
+      return sendCSVResponse(res, filename, csvString);
+    }
+
     return sendSuccess(
       res,
       { reportName: 'Pending Tasks Report', summary, tasks: reportRows },
@@ -561,6 +672,38 @@ const getClientSummaryReport = async (req, res) => {
       totalClientCases,
       corporateClients: corporateCount,
     };
+
+    // Check for CSV export request
+    if (req.query.export === 'csv' || req.query.format === 'csv') {
+      const headers = [
+        'Client Name',
+        'Organization',
+        'Email',
+        'Phone',
+        'City',
+        'Assigned Advocate',
+        'Total Cases',
+        'Active Cases',
+        'Closed Cases',
+        'Status',
+      ];
+      const rows = reportRows.map((cl) => [
+        cl.name,
+        cl.organization,
+        cl.email,
+        cl.phone,
+        cl.city,
+        cl.assignedLawyerName,
+        cl.totalCases,
+        cl.activeCases,
+        cl.closedCases,
+        cl.status,
+      ]);
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `JurisFlow_Client_Summary_Report_${today}.csv`;
+      const csvString = generateCSV(headers, rows);
+      return sendCSVResponse(res, filename, csvString);
+    }
 
     return sendSuccess(
       res,

@@ -7,7 +7,7 @@
  * 4. Report 4: Client Case Summary Report (Client Metadata, Caseload, Cases Array, Client Scoping)
  */
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = process.env.API_BASE || 'http://127.0.0.1:3000/api';
 
 const runPhase9Tests = async () => {
   console.log('🧪 Starting Phase 9 Four Mandatory Reports Verification Tests...\n');
