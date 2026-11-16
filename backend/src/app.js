@@ -14,10 +14,17 @@ const app = express();
 app.use(helmet());
 
 // 2. Cross-Origin Resource Sharing (CORS) Configuration
+const configuredOrigins = (config.clientOrigin || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
-  config.clientOrigin,
+  ...configuredOrigins,
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
   'http://localhost:80',
   'http://127.0.0.1:80',
   'http://localhost',
