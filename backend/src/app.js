@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const fs = require('fs');
 const config = require('./config/env');
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
@@ -11,7 +12,12 @@ const { notFoundHandler, errorHandler } = require('./middleware/error.middleware
 const app = express();
 
 // 1. Security HTTP Headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // 2. Cross-Origin Resource Sharing (CORS) Configuration
 const configuredOrigins = (config.clientOrigin || '')
@@ -71,17 +77,33 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 5. Base API Router (Documents are strictly streamed via authenticated /api/documents/:id/download)
 app.use('/api', routes);
 
-// 7. Root Route Redirection / Info
-app.get('/', (req, res) => {
-  res.json({
-    status: 'online',
-    portal: 'Legal Case and Court Hearing Management Portal API',
-    student: config.project.student,
-    rollNumber: config.project.roll,
-    academicYear: config.project.academicYear,
-    healthCheck: '/api/health',
+// 6. Serve Frontend Static Build (Single Web Service Deployment)
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+
+if (fs.existsSync(frontendDistPath)) {
+  // Serve static assets from frontend/dist
+  app.use(express.static(frontendDistPath));
+
+  // SPA fallback for all client-side navigation routes (excluding /api)
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
-});
+} else {
+  // Root Route API fallback when frontend build is not found
+  app.get('/', (req, res) => {
+    res.json({
+      status: 'online',
+      portal: 'Legal Case and Court Hearing Management Portal API',
+      student: config.project.student,
+      rollNumber: config.project.roll,
+      academicYear: config.project.academicYear,
+      healthCheck: '/api/health',
+    });
+  });
+}
 
 // 8. 404 & Centralized Error Handlers
 app.use(notFoundHandler);

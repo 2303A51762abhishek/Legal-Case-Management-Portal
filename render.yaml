@@ -1,5 +1,6 @@
 # ==============================================================================
 # JurisFlow — Render Blueprint Infrastructure as Code (render.yaml)
+# Unified Single Web Service (Full-Stack React SPA + Express.js REST API)
 #
 # Project: Legal Case and Court Hearing Management Portal
 # Student: MAMILLAPALLY ABHISHEK (Roll: 2303A51762)
@@ -7,16 +8,12 @@
 # ==============================================================================
 
 services:
-  # -------------------------------------------------------------
-  # 1. Express.js REST API Backend Web Service
-  # -------------------------------------------------------------
   - type: web
-    name: jurisflow-backend
+    name: jurisflow-portal
     runtime: node
     plan: free
     region: oregon
-    rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -27,7 +24,7 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false # Provide your MongoDB Atlas connection string in Render Dashboard
+        sync: false # Enter your MongoDB Atlas connection string in Render Dashboard
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -40,22 +37,3 @@ services:
         value: "2303A51762"
       - key: ACADEMIC_YEAR
         value: "2026-2027"
-
-  # -------------------------------------------------------------
-  # 2. React.js (Vite) Frontend Static Site
-  # -------------------------------------------------------------
-  - type: web
-    name: jurisflow-frontend
-    runtime: static
-    plan: free
-    region: oregon
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        sync: false # Set to https://<your-jurisflow-backend>.onrender.com/api
