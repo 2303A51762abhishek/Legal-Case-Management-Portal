@@ -6,7 +6,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const config = {
   env: process.env.NODE_ENV || 'development',
-  host: process.env.HOST || '127.0.0.1',
+  host: process.env.HOST || '0.0.0.0',
   port: parseInt(process.env.PORT || '5000', 10),
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
   mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/legal_case_management_db',

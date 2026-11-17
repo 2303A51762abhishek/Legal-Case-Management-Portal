@@ -1,0 +1,61 @@
+# ==============================================================================
+# JurisFlow — Render Blueprint Infrastructure as Code (render.yaml)
+#
+# Project: Legal Case and Court Hearing Management Portal
+# Student: MAMILLAPALLY ABHISHEK (Roll: 2303A51762)
+# Course: DevOps & Full Stack (B.Tech IV Year I Semester)
+# ==============================================================================
+
+services:
+  # -------------------------------------------------------------
+  # 1. Express.js REST API Backend Web Service
+  # -------------------------------------------------------------
+  - type: web
+    name: jurisflow-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false # Provide your MongoDB Atlas connection string in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: MAX_FILE_SIZE_BYTES
+        value: 10485760
+      - key: STUDENT_NAME
+        value: "MAMILLAPALLY ABHISHEK"
+      - key: STUDENT_ROLL
+        value: "2303A51762"
+      - key: ACADEMIC_YEAR
+        value: "2026-2027"
+
+  # -------------------------------------------------------------
+  # 2. React.js (Vite) Frontend Static Site
+  # -------------------------------------------------------------
+  - type: web
+    name: jurisflow-frontend
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set to https://<your-jurisflow-backend>.onrender.com/api
