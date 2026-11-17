@@ -7,7 +7,7 @@ const seedDemoData = require('./utils/seed_demo');
 const { startScheduledReminderCron, stopScheduledReminderCron } = require('./services/reminder.service');
 
 const PORT = config.port || 5000;
-const HOST = config.host || '127.0.0.1';
+const HOST = config.host || '0.0.0.0';
 
 let server;
 
